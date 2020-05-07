@@ -1,0 +1,18 @@
+[package]
+name = "ssd-benchmark"
+description = "Super Simple Disk Benchmark - benchmarks the writing performance of your disk."
+version = "1.0.0"
+authors = ["Sven Assmann <sven.assmann.it@gmail.com>"]
+edition = "2018"
+license = "GPL-3.0-only"
+
+readme = "README.md"
+keywords = ["io", "commandline"]
+categories = ["command-line-utilities"]
+repository = "https://github.com/sassman/ssd-benchmark-rs"
+exclude = [".ci/*", ".gitignore", ".travis.yml"]
+
+[dependencies]
+
+[[bin]]
+name = "ssd-benchmark"
