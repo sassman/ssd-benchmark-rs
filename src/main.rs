@@ -1,94 +1,161 @@
-use std::fs::File;
-use std::io;
+use core::iter::Sum;
+use rand::prelude::*;
 use std::io::prelude::*;
 use std::time::{Duration, Instant};
 use std::{fs::OpenOptions, os::unix::fs::OpenOptionsExt};
 
-const O_DIRECT: i32 = 0o0040000;
-// 4 MB
-const BUF_SIZE_MB: usize = 4;
+const O_DIRECT: i32 = 0o0_040_000;
+// 8 MB
+const BUF_SIZE_MB: usize = 8;
 // 1 GB
-const TOTAL_SIZE_MB: usize = 4096;
+const TOTAL_SIZE_MB: usize = 1024;
 const MAX_CYCLES: usize = 8;
 
+// convienience functions
+trait Throughput {
+    fn throughput(&self, size_in_mb: usize) -> f32;
+}
+
+impl Throughput for Duration {
+    fn throughput(&self, size_in_mb: usize) -> f32 {
+        (size_in_mb as f32 / self.as_millis() as f32) * 1000_f32
+    }
+}
+
+impl Throughput for u64 {
+    fn throughput(&self, size_in_mb: usize) -> f32 {
+        (size_in_mb as f32 / *self as f32) * 1000_f32
+    }
+}
+
+macro_rules! println_stats {
+    ($label:expr, $value:expr, $unit:expr) => {
+        println!("{:<36} {:>10.2} {}", $label, $value, $unit);
+    };
+}
+
+macro_rules! println_time_ms {
+    ($label:expr, $value:expr) => {
+        println_stats!($label, $value, "ms");
+    };
+}
+
+macro_rules! prof {
+    ($($something:expr),*) => {
+        {
+            let start = Instant::now();
+            $(
+                $something
+            )*;
+            start.elapsed()
+        }
+    };
+}
+
 fn main() -> std::io::Result<()> {
-    let mut file = OpenOptions::new()
-        .read(true)
-        .custom_flags(O_DIRECT)
-        .open("/dev/random")
-        .expect("Can't open");
-    // let mut file = File::open("/dev/random")?;
-    let mut buffer = Box::new([0; BUF_SIZE_MB * 1024 * 1024]);
+    let verbose = false;
+    const BUF_SIZE: usize = BUF_SIZE_MB * 1024 * 1024;
+    let mut buffer = vec![0_u8; BUF_SIZE].into_boxed_slice();
 
     println!("\n###             Super Simple Disk Benchmark              ###");
     println!("## Star me on https://github.com/sassman/ssd-benchmark-rs ##\n");
 
     println!("Filling buffer with {} MB random data... ", BUF_SIZE_MB);
-    let start = Instant::now();
-    file.read_exact(buffer.as_mut())?;
-    let buffer_time = start.elapsed();
+    // let buffer_time = prof! {
+    //     file.read_exact(buffer.as_mut())?
+    // };
+    let mut rng = rand::thread_rng();
+    let buffer_time = prof! {
+        for i in 0..BUF_SIZE {
+            buffer[i] = rng.gen();
+        }
+    };
 
-    println!(
-        "Initilisation of buffer done        {} ms",
-        buffer_time.as_millis()
-    );
+    println_time_ms!("Initilisation of buffer done", buffer_time.as_millis());
 
     println!("\nStarting benchmark...");
-
+    println!();
     println!(
-        "\nPerform sequential writing of total {} MB in {} MB chunks... ",
+        "Perform sequential writing of total {} MB in {} MB chunks",
         TOTAL_SIZE_MB, BUF_SIZE_MB
     );
 
     let write_time = write_once(buffer.as_ref())?;
 
+    if !verbose {
+        println!();
+    }
+    println!();
+    println_time_ms!("Total time", write_time.as_millis());
+    println_stats!("Throughput", write_time.throughput(TOTAL_SIZE_MB), "MB/s");
+    println!();
     println!(
-        " Total time                         {} ms",
-        write_time.as_millis(),
-    );
-    println!(
-        " Throughput                         {} MB/s",
-        TOTAL_SIZE_MB as f32 / write_time.as_secs() as f32,
-    );
-
-    println!(
-        "\nPerform {} cycles of writing of {} MB... ",
+        "Perform {} write cycles of {} MB",
         MAX_CYCLES, TOTAL_SIZE_MB,
     );
 
     let mut write_time = Duration::new(0, 0);
+    let mut min_w_time = None;
+    let mut max_w_time = None;
+    let mut write_timings: Vec<f64> = Vec::new();
     for i in 0..MAX_CYCLES {
         let duration = write_once(buffer.as_ref())?;
+        write_timings.push(duration.as_millis() as f64);
+        if max_w_time.is_none() || duration > max_w_time.unwrap() {
+            max_w_time = Some(duration);
+        }
+        if min_w_time.is_none() || duration < min_w_time.unwrap() {
+            min_w_time = Some(duration);
+        }
         write_time += duration;
-        println!(
-            " Cycle {} time                       {} ms",
-            i + 1,
-            duration.as_millis(),
-        );
-        println!(
-            " Throughput                         {} MB/s",
-            (TOTAL_SIZE_MB as f32 / duration.as_millis() as f32) * 1000 as f32,
-        );
+        println!();
+        if verbose {
+            println_time_ms!(format!("Cycle {} time", i + 1), duration.as_millis());
+            println_stats!("Throughput", duration.throughput(TOTAL_SIZE_MB), "MB/s");
+        }
     }
-    let cycle_time = write_time / MAX_CYCLES as u32;
-    println!(
-        "\n Total time                         {} ms",
-        write_time.as_millis(),
+    let deviation_time = std_deviation(&write_timings.as_slice()).unwrap_or(0 as f64) as u64;
+    let mean_time_ms = mean(&write_timings.as_slice()).unwrap_or(0 as f64) as u64;
+    let write_values: Vec<f32> = write_timings
+        .as_slice()
+        .iter()
+        .map(|t| (*t as u64).throughput(TOTAL_SIZE_MB))
+        .collect();
+    let mean_throughput = std_deviation(write_values.as_slice());
+
+    println!();
+    println_time_ms!("Total time", write_time.as_millis());
+    println_time_ms!("Min write time", min_w_time.unwrap().as_millis());
+    println_time_ms!("Max write time", max_w_time.unwrap().as_millis());
+    println_time_ms!(
+        "Range write time",
+        (max_w_time.unwrap() - min_w_time.unwrap()).as_millis()
     );
-    println!(
-        " Average write time                 {} ms",
-        cycle_time.as_millis(),
+    println_time_ms!("Average write time μ", mean_time_ms);
+    println_time_ms!("Standard deviation σ", deviation_time);
+    println!();
+    println_stats!(
+        "Min throughput",
+        max_w_time.unwrap().throughput(TOTAL_SIZE_MB),
+        "MB/s"
     );
-    println!(
-        " Average throughput                 {} MB/s",
-        (TOTAL_SIZE_MB as f32 / cycle_time.as_millis() as f32) * 1000 as f32,
+    println_stats!(
+        "Max throughput",
+        min_w_time.unwrap().throughput(TOTAL_SIZE_MB),
+        "MB/s"
     );
+    println_stats!(
+        "Average throughput Ø",
+        mean_time_ms.throughput(TOTAL_SIZE_MB),
+        "MB/s"
+    );
+    println_stats!("Standard deviation σ", mean_throughput.unwrap(), "MB/s");
 
     Ok(())
 }
 
 fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
-    let start = Instant::now();
+    let mut write_time = Duration::new(0, 0);
     {
         let mut file = OpenOptions::new()
             .write(true)
@@ -98,12 +165,51 @@ fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
             .expect("Can't open test file");
 
         for _ in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
-            file.write(buffer)?;
+            write_time += prof! {
+                file.write_all(buffer)?
+            };
+            print!(".");
+            std::io::stdout().flush()?;
         }
     } // to enforce Drpp on file
-    let write_time = start.elapsed();
-
     std::fs::remove_file("test")?;
 
     Ok(write_time)
+}
+
+fn mean<'a, T: 'a>(numbers: &'a [T]) -> Option<f64>
+where
+    T: Into<f64> + Sum<&'a T>,
+{
+    let sum = numbers.iter().sum::<T>();
+    let length = numbers.len() as f64;
+
+    match length {
+        positive if positive > 0_f64 => Some(sum.into() / length),
+        _ => None,
+    }
+}
+
+fn std_deviation<'a, T: 'a>(data: &'a [T]) -> Option<f64>
+where
+    T: Into<f64> + Sum<&'a T> + Copy,
+{
+    match (mean(data), data.len()) {
+        (Some(data_mean), count) if count > 0 => {
+            let count: f64 = count as f64;
+            let variance: f64 = data
+                .iter()
+                .map::<f64, _>(|value| {
+                    let value: f64 = (*value).into();
+                    let diff: f64 = data_mean - value;
+
+                    diff * diff
+                })
+                .sum::<f64>()
+                / count;
+
+            Some(variance.sqrt())
+        }
+        _ => None,
+    }
 }
