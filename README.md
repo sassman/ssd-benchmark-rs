@@ -30,14 +30,20 @@ $HOME/.cargo/bin/ssd-benchmark
 
 ```sh
 $ ssd-benchmark
+  ____    ____    ____                ____                          _                                  _
+ / ___|  / ___|  |  _ \              | __ )    ___   _ __     ___  | |__    _ __ ___     __ _   _ __  | | __
+ \___ \  \___ \  | | | |    _____    |  _ \   / _ \ | '_ \   / __| | '_ \  | '_ ` _ \   / _` | | '__| | |/ /
+  ___) |  ___) | | |_| |   |_____|   | |_) | |  __/ | | | | | (__  | | | | | | | | | | | (_| | | |    |   <
+ |____/  |____/  |____/              |____/   \___| |_| |_|  \___| |_| |_| |_| |_| |_|  \__,_| |_|    |_|\_\
 
-###             Super Simple Disk Benchmark              ###
-## Star me on https://github.com/sassman/ssd-benchmark-rs ##
+
+Version 1.1.1
+Star me on https://github.com/sassman/ssd-benchmark-rs
 
 Filling buffer with 8 MB random data...
-Initilisation of buffer done               4890 ms
+Buffer filled                              5426 ms
 
-Starting benchmark...
+Start benchmarking your disk writing performance...
 
 Perform sequential writing of total 1024 MB in 8 MB chunks
 ................................................................................................................................
@@ -59,7 +65,7 @@ Total time                                29598 ms
 Min write time                             2516 ms
 Max write time                             4934 ms
 Range write time                           2418 ms
-Average write time μ                       3699 ms
+Average write time Ø                       3699 ms
 Standard deviation σ                        801 ms
 
 Min throughput                           207.54 MB/s

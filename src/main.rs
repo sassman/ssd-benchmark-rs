@@ -1,4 +1,5 @@
 use core::iter::Sum;
+use figlet_rs::FIGfont;
 use rand::prelude::*;
 use std::io::prelude::*;
 use std::time::{Duration, Instant};
@@ -52,18 +53,25 @@ macro_rules! prof {
     };
 }
 
+macro_rules! shout {
+    ($label:expr) => {
+        let standard_font = FIGfont::standand().unwrap();
+        let figure = standard_font.convert($label);
+        assert!(figure.is_some());
+        println!("{}", figure.unwrap());
+    };
+}
+
 fn main() -> std::io::Result<()> {
     let verbose = false;
     const BUF_SIZE: usize = BUF_SIZE_MB * 1024 * 1024;
     let mut buffer = vec![0_u8; BUF_SIZE].into_boxed_slice();
 
-    println!("\n###             Super Simple Disk Benchmark              ###");
-    println!("## Star me on https://github.com/sassman/ssd-benchmark-rs ##\n");
+    shout!("SSD - Benchmark");
+    println!("Version {}", env!("CARGO_PKG_VERSION"));
+    println!("Star me on https://github.com/sassman/ssd-benchmark-rs\n");
 
     println!("Filling buffer with {} MB random data... ", BUF_SIZE_MB);
-    // let buffer_time = prof! {
-    //     file.read_exact(buffer.as_mut())?
-    // };
     let mut rng = rand::thread_rng();
     let buffer_time = prof! {
         for i in 0..BUF_SIZE {
@@ -71,9 +79,9 @@ fn main() -> std::io::Result<()> {
         }
     };
 
-    println_time_ms!("Initilisation of buffer done", buffer_time.as_millis());
+    println_time_ms!("Buffer filled", buffer_time.as_millis());
 
-    println!("\nStarting benchmark...");
+    println!("\nStart benchmarking your disk writing performance...");
     println!();
     println!(
         "Perform sequential writing of total {} MB in {} MB chunks",
@@ -131,7 +139,7 @@ fn main() -> std::io::Result<()> {
         "Range write time",
         (max_w_time.unwrap() - min_w_time.unwrap()).as_millis()
     );
-    println_time_ms!("Average write time μ", mean_time_ms);
+    println_time_ms!("Average write time Ø", mean_time_ms);
     println_time_ms!("Standard deviation σ", deviation_time);
     println!();
     println_stats!(
