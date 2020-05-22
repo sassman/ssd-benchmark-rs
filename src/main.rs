@@ -42,12 +42,12 @@ macro_rules! println_time_ms {
 }
 
 macro_rules! prof {
-    ($($something:expr),*) => {
+    ($($something:expr;)+) => {
         {
             let start = Instant::now();
             $(
-                $something
-            )*;
+                $something;
+            )*
             start.elapsed()
         }
     };
@@ -76,7 +76,7 @@ fn main() -> std::io::Result<()> {
     let buffer_time = prof! {
         for i in 0..BUF_SIZE {
             buffer[i] = rng.gen();
-        }
+        };
     };
 
     println_time_ms!("Buffer filled", buffer_time.as_millis());
@@ -174,10 +174,10 @@ fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
 
         for _ in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
             write_time += prof! {
-                file.write_all(buffer)?
+                file.write_all(buffer)?;
+                std::io::stdout().flush()?;
             };
             print!(".");
-            std::io::stdout().flush()?;
         }
     } // to enforce Drpp on file
     std::fs::remove_file("test")?;
