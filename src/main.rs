@@ -1,11 +1,12 @@
 use core::iter::Sum;
 use figlet_rs::FIGfont;
 use rand::prelude::*;
+use std::fs::remove_file;
+use std::fs::File;
 use std::io::prelude::*;
+use std::io::stdout;
 use std::time::{Duration, Instant};
-use std::{fs::OpenOptions, os::unix::fs::OpenOptionsExt};
 
-const O_DIRECT: i32 = 0o0_040_000;
 // 8 MB
 const BUF_SIZE_MB: usize = 8;
 // 1 GB
@@ -165,22 +166,17 @@ fn main() -> std::io::Result<()> {
 fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
     let mut write_time = Duration::new(0, 0);
     {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .custom_flags(O_DIRECT)
-            .create(true)
-            .open("test")
-            .expect("Can't open test file");
+        let mut file = File::create("test").expect("Can't open test file");
 
         for _ in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
             write_time += prof! {
                 file.write_all(buffer)?;
-                std::io::stdout().flush()?;
             };
             print!(".");
+            stdout().flush()?;
         }
     } // to enforce Drpp on file
-    std::fs::remove_file("test")?;
+    remove_file("test")?;
 
     Ok(write_time)
 }
