@@ -37,7 +37,7 @@ $ ssd-benchmark
  |____/  |____/  |____/              |____/   \___| |_| |_|  \___| |_| |_| |_| |_| |_|  \__,_| |_|    |_|\_\
 
 
-Version 1.1.1
+Version 1.1.3
 Star me on https://github.com/sassman/ssd-benchmark-rs
 
 Filling buffer with 8 MB random data...
