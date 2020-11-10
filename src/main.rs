@@ -170,6 +170,10 @@ fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
 
         for _ in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
             file.write_all(buffer)?;
+            // make sure the data is synced with the disk as the kernel performs
+            // write buffering
+            //
+            // TODO Open the file in O_DSYNC instead to avoid the additional syscall
             file.sync_data()?;
             print!(".");
             stdout().flush()?;
