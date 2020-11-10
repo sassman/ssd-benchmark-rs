@@ -164,22 +164,23 @@ fn main() -> std::io::Result<()> {
 }
 
 fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
-    let start = Instant::now();
+    let mut write_time = Duration::new(0, 0);
     {
         let mut file = File::create("test").expect("Can't open test file");
 
         for _ in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
-            file.write_all(buffer)?;
             // make sure the data is synced with the disk as the kernel performs
             // write buffering
             //
             // TODO Open the file in O_DSYNC instead to avoid the additional syscall
-            file.sync_data()?;
+            write_time += prof!{
+                file.write_all(buffer)?;
+                file.sync_data()?;
+            };
             print!(".");
             stdout().flush()?;
         }
     } // to enforce Drpp on file
-    let write_time = Instant::now() - start;
     remove_file("test")?;
 
     Ok(write_time)
