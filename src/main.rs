@@ -169,8 +169,13 @@ fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
         let mut file = File::create("test").expect("Can't open test file");
 
         for _ in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
-            write_time += prof! {
+            // make sure the data is synced with the disk as the kernel performs
+            // write buffering
+            //
+            // TODO Open the file in O_DSYNC instead to avoid the additional syscall
+            write_time += prof!{
                 file.write_all(buffer)?;
+                file.sync_data()?;
             };
             print!(".");
             stdout().flush()?;
