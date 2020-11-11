@@ -8,6 +8,10 @@ It used random data from [`rand crate`][3] and writes first sequentially chunks 
 
 After that it writes this random data 8 times again on disk and measures the average writing times and throughput for this.
 
+## Demo
+
+![demo](./docs/demo.gif)
+
 ## Quick Start
 
 ### Install
