@@ -187,8 +187,8 @@ fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
 }
 
 fn mean<'a, T: 'a>(numbers: &'a [T]) -> Option<f64>
-    where
-        T: Into<f64> + Sum<&'a T>,
+where
+    T: Into<f64> + Sum<&'a T>,
 {
     let sum = numbers.iter().sum::<T>();
     let length = numbers.len() as f64;
@@ -200,8 +200,8 @@ fn mean<'a, T: 'a>(numbers: &'a [T]) -> Option<f64>
 }
 
 fn std_deviation<'a, T: 'a>(data: &'a [T]) -> Option<f64>
-    where
-        T: Into<f64> + Sum<&'a T> + Copy,
+where
+    T: Into<f64> + Sum<&'a T> + Copy,
 {
     match (mean(data), data.len()) {
         (Some(data_mean), count) if count > 0 => {
@@ -226,7 +226,6 @@ fn std_deviation<'a, T: 'a>(data: &'a [T]) -> Option<f64>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::ops::Mul;
 
     #[test]
     fn test_std_deviation() {
@@ -250,6 +249,6 @@ mod tests {
     fn test_throughput_trait() {
         let d = Duration::new(1000, 0);
         let t = d.throughput(100);
-        assert_eq!(t.mul(10.0).round(), 1.0);
+        assert!((t - 0.1).abs() <= f32::EPSILON);
     }
 }
