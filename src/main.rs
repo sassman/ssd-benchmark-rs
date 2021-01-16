@@ -13,7 +13,7 @@ const BUF_SIZE_MB: usize = 8;
 const TOTAL_SIZE_MB: usize = 1024;
 const MAX_CYCLES: usize = 8;
 
-// convienience functions
+// convenience functions
 trait Throughput {
     fn throughput(&self, size_in_mb: usize) -> f32;
 }
@@ -173,7 +173,7 @@ fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
             // write buffering
             //
             // TODO Open the file in O_DSYNC instead to avoid the additional syscall
-            write_time += prof!{
+            write_time += prof! {
                 file.write_all(buffer)?;
                 file.sync_data()?;
             };
@@ -187,8 +187,8 @@ fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
 }
 
 fn mean<'a, T: 'a>(numbers: &'a [T]) -> Option<f64>
-where
-    T: Into<f64> + Sum<&'a T>,
+    where
+        T: Into<f64> + Sum<&'a T>,
 {
     let sum = numbers.iter().sum::<T>();
     let length = numbers.len() as f64;
@@ -200,8 +200,8 @@ where
 }
 
 fn std_deviation<'a, T: 'a>(data: &'a [T]) -> Option<f64>
-where
-    T: Into<f64> + Sum<&'a T> + Copy,
+    where
+        T: Into<f64> + Sum<&'a T> + Copy,
 {
     match (mean(data), data.len()) {
         (Some(data_mean), count) if count > 0 => {
@@ -220,5 +220,36 @@ where
             Some(variance.sqrt())
         }
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::ops::Mul;
+
+    #[test]
+    fn test_std_deviation() {
+        let v = std_deviation(&[10, 12, 23, 23, 16, 23, 21, 16]);
+        assert_eq!(v, Some(4.898979485566356));
+    }
+
+    #[test]
+    fn test_mean() {
+        let m = mean(&[1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        assert_eq!(m, Some(5.0));
+    }
+
+    #[test]
+    fn test_duration_collecting() {
+        let d = write_once(&[0xff, 0xff, 0xff]).unwrap();
+        assert!(d.as_millis() > 0);
+    }
+
+    #[test]
+    fn test_throughput_trait() {
+        let d = Duration::new(1000, 0);
+        let t = d.throughput(100);
+        assert_eq!(t.mul(10.0).round(), 1.0);
     }
 }
