@@ -1,4 +1,15 @@
-# Super Simple Disk Benchmark
+<div align="center">
+ <img src="https://github.com/sassman/ssd-benchmark-rs/blob/master/docs/demo.png?raw=true" width="450">
+ <h1><strong>SSD Benchmark</strong></h1>
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Crates Version](https://img.shields.io/crates/v/ssd-benchmark.svg)](https://crates.io/crates/ssd-benchmark)
+[![Build Status](https://github.com/sassman/ssd-benchmark-rs/workflows/Build/badge.svg)](https://github.com/sassman/ssd-benchmark-rs/actions?query=branch%3Amaster+workflow%3ABuild+)
+[![dependency status](https://deps.rs/repo/github/sassman/ssd-benchmark-rs/status.svg)](https://deps.rs/repo/github/sassman/ssd-benchmark-rs)
+
+> A super simple disk benchmark tool
+
+</div>
 
 inspired by [simple disk benchmark][1].
 
@@ -14,7 +25,15 @@ After that it writes this random data 8 times again on disk and measures the ave
 
 ## Quick Start
 
-### Install
+### Install on linux
+
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/ssd-benchmark)
+
+```sh
+sudo snap install ssd-benchmark
+```
+
+### Install with cargo
 
 To install the ssd-benchmark tool, you just need to run
 
@@ -50,20 +69,20 @@ Buffer filled                              5426 ms
 Start benchmarking your disk writing performance...
 
 Perform sequential writing of total 1024 MB in 8 MB chunks
-................................................................................................................................
+................................................................
 
 Total time                                 2522 ms
 Throughput                               512.00 MB/s
 
 Perform 8 write cycles of 1024 MB
-................................................................................................................................
-................................................................................................................................
-................................................................................................................................
-................................................................................................................................
-................................................................................................................................
-................................................................................................................................
-................................................................................................................................
-................................................................................................................................
+................................................................
+................................................................
+................................................................
+................................................................
+................................................................
+................................................................
+................................................................
+................................................................
 
 Total time                                29598 ms
 Min write time                             2516 ms
