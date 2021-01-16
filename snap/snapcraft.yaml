@@ -1,0 +1,28 @@
+name: ssd-benchmark
+base: core18
+adopt-info: ssd-benchmark
+summary: Super Simple Disk Benchmark
+description: |
+  This tool has just one single purpose, it measures the writing performance of your hard disk on macOS, Linux and Windows. More precisely spoken of the disk under your `CWD`.
+
+  It used random data from [`rand crate`][3] and writes first sequentially chunks of 8MB until a total 1GB is written. It measures writing time and throughput.
+
+  After that it writes this random data 8 times again on disk and measures the average writing times and throughput for this.
+
+grade: stable
+confinement: strict
+
+parts:
+  ssd-benchmark:
+    plugin: rust
+    source: .
+    source-subdir: ssd-benchnark
+    override-pull: |
+      snapcraftctl pull
+      snapcraftctl set-version "$(git describe --tags)"
+
+apps:
+  ssd-benchmark:
+    command: bin/ssd-benchmark
+    plugs:
+      - home

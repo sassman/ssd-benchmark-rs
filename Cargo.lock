@@ -77,7 +77,7 @@ dependencies = [
 
 [[package]]
 name = "ssd-benchmark"
-version = "1.1.4"
+version = "1.1.5"
 dependencies = [
  "figlet-rs",
  "rand",

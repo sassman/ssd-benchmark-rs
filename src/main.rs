@@ -168,7 +168,7 @@ fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
     {
         let mut file = File::create("test").expect("Can't open test file");
 
-        for _ in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
+        for i in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
             // make sure the data is synced with the disk as the kernel performs
             // write buffering
             //
@@ -177,10 +177,12 @@ fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
                 file.write_all(buffer)?;
                 file.sync_data()?;
             };
-            print!(".");
+            if i % 2 == 0 {
+                print!(".");
+            }
             stdout().flush()?;
         }
-    } // to enforce Drpp on file
+    } // to enforce Drop on file
     remove_file("test")?;
 
     Ok(write_time)
