@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## 🎯 [1.1.5] 2021-01-17
+## [1.1.5] 2021-01-17
 ### Added
 - add ci/cd pipeline to automate PR checks [[e486589](https://github.com/sassman/ssd-benchmark-rs/commit/e4865890fd55936eaf9e2bddb39a5276185a9c99)]
 - add some basic tests [[8d3ac5f](https://github.com/sassman/ssd-benchmark-rs/commit/8d3ac5f4dcb8b39b8a033759930b2e8a5d848144)]
