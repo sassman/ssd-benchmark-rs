@@ -15,8 +15,6 @@ confinement: strict
 parts:
   ssd-benchmark:
     plugin: rust
-    source: .
-    source-subdir: ssd-benchnark
     override-pull: |
       snapcraftctl pull
       snapcraftctl set-version "$(git describe --tags)"
