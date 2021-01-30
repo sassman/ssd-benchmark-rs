@@ -81,7 +81,7 @@ jobs:
   audit:
     name: security audit
     needs: check
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: setup | rust
@@ -100,7 +100,7 @@ jobs:
   publish:
     name: post / cargo publish
     needs: [audit, lint, tests]
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: setup | rust
@@ -117,7 +117,7 @@ jobs:
   release:
     name: post / github release
     needs: publish
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: setup | rust
@@ -129,6 +129,8 @@ jobs:
       - uses: Swatinem/rust-cache@v1
       - run: cargo install cargo-deb
       - run: cargo deb
+## FIX(cc-linker issue): note: Too many levels of symbolic links (os error 40)
+#      - uses: ebbflow-io/cargo-rpm-amd64-fedora@1.1
       - name: Get version from tag
         id: tag_name
         run: |
