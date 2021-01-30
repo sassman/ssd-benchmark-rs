@@ -1,7 +1,6 @@
 use std::time::{Duration, Instant};
 
 use figlet_rs::FIGfont;
-use rand::prelude::*;
 
 use crate::statistics::{mean, std_deviation};
 use crate::utils::{write_once, Throughput, BUF_SIZE_MB, MAX_CYCLES, TOTAL_SIZE_MB};
@@ -18,10 +17,9 @@ fn main() -> std::io::Result<()> {
     println!("Version {}", env!("CARGO_PKG_VERSION"));
 
     println!("Filling buffer with {} MB random data... ", BUF_SIZE_MB);
-    let mut rng = rand::thread_rng();
     let buffer_time = prof! {
         for i in 0..BUF_SIZE {
-            buffer[i] = rng.gen();
+            buffer[i] = fastrand::u8(..);
         };
     };
 
