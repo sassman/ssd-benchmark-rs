@@ -1,67 +1,13 @@
-use core::iter::Sum;
-use figlet_rs::FIGfont;
-use rand::prelude::*;
-use std::fs::remove_file;
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::stdout;
 use std::time::{Duration, Instant};
 
-// 8 MB
-const BUF_SIZE_MB: usize = 8;
-// 1 GB
-const TOTAL_SIZE_MB: usize = 1024;
-const MAX_CYCLES: usize = 8;
+use figlet_rs::FIGfont;
+use rand::prelude::*;
 
-// convenience functions
-trait Throughput {
-    fn throughput(&self, size_in_mb: usize) -> f32;
-}
+use crate::statistics::{mean, std_deviation};
+use crate::utils::{write_once, Throughput, BUF_SIZE_MB, MAX_CYCLES, TOTAL_SIZE_MB};
 
-impl Throughput for Duration {
-    fn throughput(&self, size_in_mb: usize) -> f32 {
-        (size_in_mb as f32 / self.as_millis() as f32) * 1000_f32
-    }
-}
-
-impl Throughput for u64 {
-    fn throughput(&self, size_in_mb: usize) -> f32 {
-        (size_in_mb as f32 / *self as f32) * 1000_f32
-    }
-}
-
-macro_rules! println_stats {
-    ($label:expr, $value:expr, $unit:expr) => {
-        println!("{:<36} {:>10.2} {}", $label, $value, $unit);
-    };
-}
-
-macro_rules! println_time_ms {
-    ($label:expr, $value:expr) => {
-        println_stats!($label, $value, "ms");
-    };
-}
-
-macro_rules! prof {
-    ($($something:expr;)+) => {
-        {
-            let start = Instant::now();
-            $(
-                $something;
-            )*
-            start.elapsed()
-        }
-    };
-}
-
-macro_rules! shout {
-    ($label:expr) => {
-        let standard_font = FIGfont::standand().unwrap();
-        let figure = standard_font.convert($label);
-        assert!(figure.is_some());
-        println!("{}", figure.unwrap());
-    };
-}
+mod statistics;
+mod utils;
 
 fn main() -> std::io::Result<()> {
     let verbose = false;
@@ -70,7 +16,6 @@ fn main() -> std::io::Result<()> {
 
     shout!("SSD - Benchmark");
     println!("Version {}", env!("CARGO_PKG_VERSION"));
-    println!("Star me on https://github.com/sassman/ssd-benchmark-rs\n");
 
     println!("Filling buffer with {} MB random data... ", BUF_SIZE_MB);
     let mut rng = rand::thread_rng();
@@ -161,96 +106,4 @@ fn main() -> std::io::Result<()> {
     println_stats!("Standard deviation σ", mean_throughput.unwrap(), "MB/s");
 
     Ok(())
-}
-
-fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
-    let mut write_time = Duration::new(0, 0);
-    {
-        let mut file = File::create("test").expect("Can't open test file");
-
-        for i in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
-            // make sure the data is synced with the disk as the kernel performs
-            // write buffering
-            //
-            // TODO Open the file in O_DSYNC instead to avoid the additional syscall
-            write_time += prof! {
-                file.write_all(buffer)?;
-                file.sync_data()?;
-            };
-            if i % 2 == 0 {
-                print!(".");
-            }
-            stdout().flush()?;
-        }
-    } // to enforce Drop on file
-    remove_file("test")?;
-
-    Ok(write_time)
-}
-
-fn mean<'a, T: 'a>(numbers: &'a [T]) -> Option<f64>
-where
-    T: Into<f64> + Sum<&'a T>,
-{
-    let sum = numbers.iter().sum::<T>();
-    let length = numbers.len() as f64;
-
-    match length {
-        positive if positive > 0_f64 => Some(sum.into() / length),
-        _ => None,
-    }
-}
-
-fn std_deviation<'a, T: 'a>(data: &'a [T]) -> Option<f64>
-where
-    T: Into<f64> + Sum<&'a T> + Copy,
-{
-    match (mean(data), data.len()) {
-        (Some(data_mean), count) if count > 0 => {
-            let count: f64 = count as f64;
-            let variance: f64 = data
-                .iter()
-                .map::<f64, _>(|value| {
-                    let value: f64 = (*value).into();
-                    let diff: f64 = data_mean - value;
-
-                    diff * diff
-                })
-                .sum::<f64>()
-                / count;
-
-            Some(variance.sqrt())
-        }
-        _ => None,
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_std_deviation() {
-        let v = std_deviation(&[10, 12, 23, 23, 16, 23, 21, 16]);
-        assert_eq!(v, Some(4.898979485566356));
-    }
-
-    #[test]
-    fn test_mean() {
-        let m = mean(&[1, 2, 3, 4, 5, 6, 7, 8, 9]);
-        assert_eq!(m, Some(5.0));
-    }
-
-    #[test]
-    fn test_duration_collecting() {
-        let d = write_once(&[0xff, 0xff, 0xff]).unwrap();
-        assert!(d.as_millis() > 0);
-    }
-
-    #[test]
-    fn test_throughput_trait() {
-        let d = Duration::new(1000, 0);
-        let t = d.throughput(100);
-        assert!((t - 0.1).abs() <= f32::EPSILON);
-    }
 }
