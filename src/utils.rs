@@ -20,13 +20,13 @@ impl HumanReadable for Duration {
         if self >= &ONE_MIN {
             let time = (self.as_secs() / 60) as u128;
             let seconds = self.as_secs() - (time * 60) as u64;
-            return format!("{} m {} {:<4}", time, seconds, "s");
+            return format!("{} m {} {:<3}", time, seconds, "s");
         } else if self >= &ONE_SEC {
             return format!("{:>10} {:<4}", self.as_secs_f32().round(), "s");
         }
         let time = self.as_millis();
 
-        format!("{:>10} ms", time)
+        format!("{:>10} {:<4}", time, "ms")
     }
 }
 
@@ -119,10 +119,19 @@ mod tests {
 
     #[test]
     fn should_format_time() {
-        assert_eq!(Duration::from_secs(100).as_human_readable(), "1m 40s");
-        assert_eq!(Duration::from_millis(1200).as_human_readable(), "~1s");
-        assert_eq!(Duration::from_millis(1800).as_human_readable(), "~2s");
-        assert_eq!(Duration::from_millis(100).as_human_readable(), "100ms");
+        assert_eq!(Duration::from_secs(100).as_human_readable(), "1 m 40 s  ");
+        assert_eq!(
+            Duration::from_millis(1200).as_human_readable(),
+            "         1 s   "
+        );
+        assert_eq!(
+            Duration::from_millis(1800).as_human_readable(),
+            "         2 s   "
+        );
+        assert_eq!(
+            Duration::from_millis(100).as_human_readable(),
+            "       100 ms  "
+        );
     }
 
     #[test]
