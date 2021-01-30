@@ -126,6 +126,9 @@ jobs:
           toolchain: stable
           default: true
           profile: minimal
+      - uses: Swatinem/rust-cache@v1
+      - run: cargo install cargo-deb
+      - run: cargo deb
       - name: Get version from tag
         id: tag_name
         run: |
@@ -151,3 +154,13 @@ jobs:
           body: ${{ steps.changelog_reader.outputs.changes }}
           prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
           draft: ${{ steps.changelog_reader.outputs.status == 'unreleased' }}
+      - name: Upload Release Artefact .deb file
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./target/debian/ssd-benchmark_${{ github.ref }}_amd64.deb
+          asset_name: ssd-benchmark_${{ steps.tag_name.outputs.current_version }}_amd64.deb
+          asset_content_type: application/vnd.debian.binary-package
