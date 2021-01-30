@@ -15,7 +15,7 @@ inspired by [simple disk benchmark][1].
 
 This tool has just one single purpose, it measures the writing performance of your hard disk on macOS and Linux. More precisely spoken of the disk under your `CWD`.
 
-It used random data from [`rand crate`][3] and writes first sequentially chunks of 8MB until a total 1GB is written. It measures writing time and throughput.
+It used random data and writes first sequentially chunks of 8MB until a total 1GB is written. It measures writing time and throughput.
 
 After that it writes this random data 8 times again on disk and measures the average writing times and throughput for this.
 
@@ -105,4 +105,3 @@ If you miss a feature file an issue on [github][2] and don't forget to star the 
 
 [1]: http://www.geschke-online.de/sdb/
 [2]: https://github.com/sassman/ssd-benchmark-rs/issues
-[3]: https://crates.io/crates/rand
