@@ -20,15 +20,13 @@ impl HumanReadable for Duration {
         if self >= &ONE_MIN {
             let time = (self.as_secs() / 60) as u128;
             let seconds = self.as_secs() - (time * 60) as u64;
-            return format!("{}m {}s", time, seconds);
+            return format!("{} m {} {:<4}", time, seconds, "s");
         } else if self >= &ONE_SEC {
-            let unit = "s";
-            return format!("~{}{}", self.as_secs_f32().round(), unit);
+            return format!("{:>10} {:<4}", self.as_secs_f32().round(), "s");
         }
         let time = self.as_millis();
-        let unit = "ms";
 
-        format!("{}{}", time, unit)
+        format!("{:>10} ms", time)
     }
 }
 
@@ -59,7 +57,11 @@ macro_rules! println_stats {
 #[macro_export]
 macro_rules! println_time_ms {
     ($label:expr, $value:expr) => {
-        println_stats!($label, $value, "ms");
+        println!(
+            "{:<36} {}",
+            $label,
+            Duration::from_millis($value as u64).as_human_readable()
+        );
     };
 }
 

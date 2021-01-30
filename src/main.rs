@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use figlet_rs::FIGfont;
 
 use crate::statistics::{mean, std_deviation};
-use crate::utils::{write_once, Throughput, BUF_SIZE_MB, MAX_CYCLES, TOTAL_SIZE_MB};
+use crate::utils::{write_once, HumanReadable, Throughput, BUF_SIZE_MB, MAX_CYCLES, TOTAL_SIZE_MB};
 
 mod statistics;
 mod utils;

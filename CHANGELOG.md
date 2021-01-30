@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- remove `rand` crate dependency in favor of more lightweight `fastrand` crate
+- little change of time unit presentation, to be more human readable for slow systems like my Raspi
 
 ## [1.1.5] 2021-01-17
 ### Added
