@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.1.7] 2021-05-01
+### Changed
+- [Upgrade to GitHub-native Dependabot](https://github.com/sassman/ssd-benchmark-rs/pull/5)
+- [chore(deps): bump fastrand from 1.4.0 to 1.4.1](https://github.com/sassman/ssd-benchmark-rs/pull/4)
 
 ## [1.1.6] 2021-01-30
 ### Changed
@@ -28,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.1] 2020-05-12
 ## [1.0.0] 2020-05-07
 
-[Unreleased]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.6...HEAD
+[Unreleased]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.7...HEAD
+[1.1.7]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.7...v1.1.6
 [1.1.6]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.6...v1.1.5
 [1.1.5]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.5...v1.1.4
 [1.1.4]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.4...v1.1.3
