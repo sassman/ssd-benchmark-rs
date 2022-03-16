@@ -66,8 +66,8 @@ fn main() -> std::io::Result<()> {
             println_stats!("Throughput", duration.throughput(TOTAL_SIZE_MB), "MB/s");
         }
     }
-    let deviation_time = std_deviation(&write_timings.as_slice()).unwrap_or(0 as f64) as u64;
-    let mean_time_ms = mean(&write_timings.as_slice()).unwrap_or(0 as f64) as u64;
+    let deviation_time = std_deviation(write_timings.as_slice()).unwrap_or(0 as f64) as u64;
+    let mean_time_ms = mean(write_timings.as_slice()).unwrap_or(0 as f64) as u64;
     let write_values: Vec<f32> = write_timings
         .as_slice()
         .iter()
