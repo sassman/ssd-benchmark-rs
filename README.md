@@ -17,13 +17,19 @@ This tool has just one single purpose, it measures the writing performance of yo
 
 It used random data and writes first sequentially chunks of 8MB until a total 1GB is written. It measures writing time and throughput.
 
-After that it writes this random data 8 times again on disk and measures the average writing times and throughput for this.
+After that, it writes these random data 8 times again on disk and measures the average writing times and throughput for this.
 
 ## Demo
 
 ![demo](./docs/demo.gif)
 
 ## Quick Start
+
+### Using the docker image
+
+```sh
+docker run --rm 5422m4n/ssd-benchmark
+```
 
 ### Install on linux
 
