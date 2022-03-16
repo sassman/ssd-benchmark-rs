@@ -28,7 +28,7 @@ After that, it writes these random data 8 times again on disk and measures the a
 ### Using the docker image
 
 ```sh
-docker run --rm 5422m4n/ssd-benchmark
+docker run --rm ghcr.io/sassman/ssd-benchmark-rs
 ```
 
 ### Install on linux
