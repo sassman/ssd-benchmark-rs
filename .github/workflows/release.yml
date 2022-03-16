@@ -14,7 +14,7 @@ jobs:
 
   publish:
     name: post / cargo publish
-    needs: [audit, lint, tests]
+    needs: doing-a-build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -27,6 +27,10 @@ jobs:
       - uses: katyo/publish-crates@v1
         with:
           registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  publish-to-dockerhub:
+    needs: publish
+    uses: sassman/ssd-benchmark-rs/.github/workflows/deploy-to-dockerhub.yml@main
 
   # https://github.com/marketplace/actions/changelog-reader
   release:
