@@ -1,10 +1,10 @@
 <div align="center">
- <img src="https://github.com/sassman/ssd-benchmark-rs/blob/master/docs/demo.png?raw=true" width="950">
+ <img src="https://github.com/sassman/ssd-benchmark-rs/blob/main/docs/demo.png?raw=true" width="950">
  <h1><strong>SSD Benchmark</strong></h1>
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Crates Version](https://img.shields.io/crates/v/ssd-benchmark.svg)](https://crates.io/crates/ssd-benchmark)
-[![Build Status](https://github.com/sassman/ssd-benchmark-rs/workflows/Build/badge.svg)](https://github.com/sassman/ssd-benchmark-rs/actions?query=branch%3Amaster+workflow%3ABuild+)
+[![Build Status](https://github.com/sassman/ssd-benchmark-rs/workflows/Build/badge.svg)](https://github.com/sassman/ssd-benchmark-rs/actions?query=branch%3Amain+workflow%3ABuild+)
 [![dependency status](https://deps.rs/repo/github/sassman/ssd-benchmark-rs/status.svg)](https://deps.rs/repo/github/sassman/ssd-benchmark-rs)
 
 </div>
