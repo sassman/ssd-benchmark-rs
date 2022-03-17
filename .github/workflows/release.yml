@@ -32,6 +32,10 @@ jobs:
     needs: publish
     uses: sassman/ssd-benchmark-rs/.github/workflows/deploy-to-dockerhub.yml@main
 
+  publish-to-ghcr:
+    needs: publish
+    uses: sassman/ssd-benchmark-rs/.github/workflows/deploy-to-ghcr.yml@main
+
   # https://github.com/marketplace/actions/changelog-reader
   release:
     name: post / github release
