@@ -7,11 +7,11 @@ RUN cargo build --release
 FROM alpine:latest
 
 LABEL name="ssd-benchmark"
+LABEL org.opencontainers.image.source="https://github.com/sassman/ssd-benchmark-rs"
 LABEL repository="https://github.com/sassman/ssd-benchmark-rs"
 LABEL homepage="https://github.com/sassman/ssd-benchmark-rs"
 LABEL maintainer="Sven Assmann"
 
-COPY .docker/entrypoint.sh /entrypoint.sh
 COPY --from=builder /home/rust/src/target/x86_64-unknown-linux-musl/release/ssd-benchmark \
                     /usr/local/bin/
 CMD /usr/local/bin/ssd-benchmark
