@@ -5,7 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-[Unreleased]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.7...HEAD
+[Unreleased]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.8...HEAD
+
+## [1.1.8] 2022-03-17
+[1.1.8]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.7...v1.1.8
+
+### Changed
+- [feat(#12): prepare docker image](https://github.com/sassman/ssd-benchmark-rs/pull/14)
+- [feat(#12): prepare docker image](https://github.com/sassman/ssd-benchmark-rs/pull/13)
+- [chore(deps): bump fastrand from 1.4.1 to 1.7.0](https://github.com/sassman/ssd-benchmark-rs/pull/10)
+
+## Contributors
+- [dependabot-preview[bot]](https://github.com/apps/dependabot-preview)
+- [dependabot[bot]](https://github.com/apps/dependabot)
+- [sassman](https://github.com/sassman)
 
 ## [1.1.7] 2021-05-01
 [1.1.7]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.6...v1.1.7
