@@ -1,4 +1,4 @@
-name: Deploy to DockerHub
+name: publish to DockerHub
 on:
   workflow_dispatch:
   workflow_call:

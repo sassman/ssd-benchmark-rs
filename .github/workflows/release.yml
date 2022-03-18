@@ -30,62 +30,12 @@ jobs:
 
   publish-to-dockerhub:
     needs: publish
-    uses: sassman/ssd-benchmark-rs/.github/workflows/deploy-to-dockerhub.yml@main
+    uses: sassman/ssd-benchmark-rs/.github/workflows/publish-to-dockerhub.yml@main
 
   publish-to-ghcr:
     needs: publish
-    uses: sassman/ssd-benchmark-rs/.github/workflows/deploy-to-ghcr.yml@main
+    uses: sassman/ssd-benchmark-rs/.github/workflows/publish-to-ghcr.yml@main
 
-  # https://github.com/marketplace/actions/changelog-reader
-  release:
-    name: post / github release
+  publish-to-gh-releases:
     needs: publish
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: setup | rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          default: true
-          profile: minimal
-      - uses: Swatinem/rust-cache@v1
-      - run: cargo install cargo-deb
-      - run: cargo deb
-## FIX(cc-linker issue): note: Too many levels of symbolic links (os error 40)
-#      - uses: ebbflow-io/cargo-rpm-amd64-fedora@1.1
-      - name: Get version from tag
-        id: tag_name
-        run: |
-          echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
-        shell: bash
-      - name: Get Changelog Entry
-        id: changelog_reader
-        uses: mindsers/changelog-reader-action@v2
-        with:
-          validation_depth: 10
-          version: ${{ steps.tag_name.outputs.current_version }}
-          path: ./CHANGELOG.md
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # This pulls from the "Get Changelog Entry" step above, referencing it's ID to get its outputs object.
-          # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.changelog_reader.outputs.version }}
-          body: ${{ steps.changelog_reader.outputs.changes }}
-          prerelease: ${{ steps.changelog_reader.outputs.status == 'prereleased' }}
-          draft: ${{ steps.changelog_reader.outputs.status == 'unreleased' }}
-      - name: Upload Release Artefact .deb file
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/debian/ssd-benchmark_${{ steps.tag_name.outputs.current_version }}_amd64.deb
-          asset_name: ssd-benchmark_${{ steps.tag_name.outputs.current_version }}_amd64.deb
-          asset_content_type: application/vnd.debian.binary-package
+    uses: sassman/ssd-benchmark-rs/.github/workflows/publish-to-gh-releases.yml@main
