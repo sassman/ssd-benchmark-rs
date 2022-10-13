@@ -81,7 +81,7 @@ macro_rules! prof {
 #[macro_export]
 macro_rules! shout {
     ($label:expr) => {
-        let standard_font = FIGfont::standand().unwrap();
+        let standard_font = FIGfont::standard().unwrap();
         let figure = standard_font.convert($label);
         assert!(figure.is_some());
         println!("{}", figure.unwrap());
