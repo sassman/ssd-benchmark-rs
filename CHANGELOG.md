@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 [Unreleased]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.8...HEAD
 
+## [1.1.9] 2022-10-13
+[1.1.9]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.8...v1.1.9
+
+### Changed
+- [fix(deps): update figlet-rs and fix typo #18](https://github.com/sassman/ssd-benchmark-rs/pull/18)
+
+## Contributors
+- [safarmer](https://github.com/safarmer)
+
 ## [1.1.8] 2022-03-17
 [1.1.8]: https://github.com/sassman/ssd-benchmark-rs/compare/v1.1.7...v1.1.8
 

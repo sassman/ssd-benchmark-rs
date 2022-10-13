@@ -1,8 +1,8 @@
 [package]
 name = "ssd-benchmark"
 description = "Super Simple Disk Benchmark - benchmarks the writing performance of your disk."
-version = "1.1.8"
-authors = ["Sven Assmann <sven.assmann.it@gmail.com>"]
+version = "1.1.9"
+authors = ["Sven Kanoldt <sven@d34dl0ck.me>"]
 edition = "2018"
 license = "GPL-3.0-only"
 include = ["src/**/*", "*.md"]
