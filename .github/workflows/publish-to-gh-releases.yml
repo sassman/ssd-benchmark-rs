@@ -9,7 +9,6 @@ env:
 jobs:
   release:
     name: post / github release
-    needs: publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
