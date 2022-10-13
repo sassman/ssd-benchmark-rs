@@ -31,10 +31,14 @@ jobs:
   publish-to-dockerhub:
     needs: publish
     uses: sassman/ssd-benchmark-rs/.github/workflows/publish-to-dockerhub.yml@main
+    with:
+      secrets: inherit
 
   publish-to-ghcr:
     needs: publish
     uses: sassman/ssd-benchmark-rs/.github/workflows/publish-to-ghcr.yml@main
+    with:
+      secrets: inherit
 
   publish-to-gh-releases:
     needs: publish
