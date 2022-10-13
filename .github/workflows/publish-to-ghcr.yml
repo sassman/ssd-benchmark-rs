@@ -5,6 +5,9 @@ name: publish to ghcr.io
 on:
   workflow_dispatch:
   workflow_call:
+    secrets:
+      - GITHUB_TOKEN:
+        required: true
 
 env:
   REGISTRY: ghcr.io
