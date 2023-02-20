@@ -13,7 +13,7 @@ repository = "https://github.com/sassman/ssd-benchmark-rs"
 
 [dependencies]
 fastrand = "1.8.0"
-figlet-rs = "0.1.4"
+figlet-rs = "0.1.5"
 
 [[bin]]
 name = "ssd-benchmark"

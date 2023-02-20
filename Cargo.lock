@@ -19,9 +19,9 @@ dependencies = [
 
 [[package]]
 name = "figlet-rs"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01af5c4fc8506204d2280509e9d57d1b41e54e587c185ac09baef30d21ae63ed"
+checksum = "4742a071cd9694fc86f9fa1a08fa3e53d40cc899d7ee532295da2d085639fbc5"
 
 [[package]]
 name = "instant"
