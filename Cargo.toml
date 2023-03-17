@@ -12,7 +12,7 @@ categories = ["command-line-utilities"]
 repository = "https://github.com/sassman/ssd-benchmark-rs"
 
 [dependencies]
-fastrand = "1.8.0"
+fastrand = "1.9.0"
 figlet-rs = "0.1.5"
 
 [[bin]]
