@@ -1,6 +1,6 @@
 use std::iter::Sum;
 
-pub fn mean<'a, T: 'a>(numbers: &'a [T]) -> Option<f64>
+pub fn mean<'a, T>(numbers: &'a [T]) -> Option<f64>
 where
     T: Into<f64> + Sum<&'a T>,
 {
@@ -13,7 +13,7 @@ where
     }
 }
 
-pub fn std_deviation<'a, T: 'a>(data: &'a [T]) -> Option<f64>
+pub fn std_deviation<'a, T>(data: &'a [T]) -> Option<f64>
 where
     T: Into<f64> + Sum<&'a T> + Copy,
 {
