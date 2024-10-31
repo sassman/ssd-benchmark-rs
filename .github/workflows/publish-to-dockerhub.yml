@@ -3,9 +3,9 @@ on:
   workflow_dispatch:
   workflow_call:
     secrets:
-      - DOCKERHUB_USERNAME:
+      DOCKERHUB_USERNAME:
         required: true
-      - DOCKERHUB_TOKEN:
+      DOCKERHUB_TOKEN:
         required: true
 
 env:

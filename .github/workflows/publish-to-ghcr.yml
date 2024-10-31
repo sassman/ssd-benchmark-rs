@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   workflow_call:
     secrets:
-      - GITHUB_TOKEN:
+      GITHUB_TOKEN:
         required: true
 
 env:
