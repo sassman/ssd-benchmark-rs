@@ -13,6 +13,7 @@ jobs:
   # call out to build.yml
   doing-a-build:
     uses: sassman/ssd-benchmark-rs/.github/workflows/build.yml@main
+    secrets: inherit # pass all secrets
 
   publish:
     name: post / cargo publish
@@ -29,15 +30,14 @@ jobs:
   publish-to-dockerhub:
     needs: publish
     uses: sassman/ssd-benchmark-rs/.github/workflows/publish-to-dockerhub.yml@main
-    with:
-      secrets: inherit
+    secrets: inherit # pass all secrets
 
   publish-to-ghcr:
     needs: publish
     uses: sassman/ssd-benchmark-rs/.github/workflows/publish-to-ghcr.yml@main
-    with:
-      secrets: inherit
+    secrets: inherit # pass all secrets
 
   publish-to-gh-releases:
     needs: publish
     uses: sassman/ssd-benchmark-rs/.github/workflows/publish-to-gh-releases.yml@main
+    secrets: inherit # pass all secrets
