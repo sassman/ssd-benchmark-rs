@@ -1,5 +1,7 @@
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
+use clap::Parser;
 use figlet_rs::FIGfont;
 
 use crate::statistics::{mean, std_deviation};
@@ -8,10 +10,28 @@ use crate::utils::{write_once, HumanReadable, Throughput, BUF_SIZE_MB, MAX_CYCLE
 mod statistics;
 mod utils;
 
+/// SSD - Benchmark
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None, author, name = "ssd-benchmark")]
+struct Args {
+    /// Directory to meassure, default is the current directory.
+    #[arg(short, long)]
+    directory: Option<PathBuf>,
+}
+
 fn main() -> std::io::Result<()> {
     let verbose = false;
     const BUF_SIZE: usize = BUF_SIZE_MB * 1024 * 1024;
     let mut buffer = vec![0_u8; BUF_SIZE].into_boxed_slice();
+    let args = Args::parse();
+
+    // let's validate the directory if present
+    if let Some(dir) = args.directory.as_ref() {
+        if !dir.is_dir() {
+            eprintln!("The provided directory is not valid");
+            std::process::exit(1);
+        }
+    }
 
     shout!("SSD - Benchmark");
     println!("Version {}", env!("CARGO_PKG_VERSION"));
@@ -32,7 +52,7 @@ fn main() -> std::io::Result<()> {
         TOTAL_SIZE_MB, BUF_SIZE_MB
     );
 
-    let write_time = write_once(buffer.as_ref())?;
+    let write_time = write_once(buffer.as_ref(), &args.directory)?;
 
     if !verbose {
         println!();
@@ -51,7 +71,7 @@ fn main() -> std::io::Result<()> {
     let mut max_w_time = None;
     let mut write_timings: Vec<f64> = Vec::new();
     for i in 0..MAX_CYCLES {
-        let duration = write_once(buffer.as_ref())?;
+        let duration = write_once(buffer.as_ref(), &args.directory)?;
         write_timings.push(duration.as_millis() as f64);
         if max_w_time.is_none() || duration > max_w_time.unwrap() {
             max_w_time = Some(duration);
