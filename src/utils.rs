@@ -1,9 +1,11 @@
 use std::fs::{remove_file, File};
 use std::io::{stdout, Write};
+use std::path::PathBuf;
+use std::str::FromStr;
 use std::time::{Duration, Instant};
 
 const ONE_MIN: Duration = Duration::from_secs(60);
-const ONE_SEC: Duration = Duration::from_secs(1);
+const TEN_SEC: Duration = Duration::from_secs(10);
 
 // 8 MB
 pub const BUF_SIZE_MB: usize = 8;
@@ -18,15 +20,23 @@ pub trait HumanReadable {
 impl HumanReadable for Duration {
     fn as_human_readable(&self) -> String {
         if self >= &ONE_MIN {
-            let time = (self.as_secs() / 60) as u128;
-            let seconds = self.as_secs() - (time * 60) as u64;
-            return format!("{} m {} {:<3}", time, seconds, "s");
-        } else if self >= &ONE_SEC {
-            return format!("{:>10} {:<4}", self.as_secs_f32().round(), "s");
+            // more than one minute -> display minutes and seconds
+            let full_minutes = self.as_secs() / 60;
+            let full_seconds = self.as_secs() - (full_minutes * 60);
+            if full_seconds == 0 {
+                format!("{full_minutes} m  ",)
+            } else {
+                format!("{full_minutes} m {full_seconds} {:<3}", "s")
+            }
+        } else if self >= &TEN_SEC {
+            // more than ten seconds -> display seconds
+            let full_seconds = self.as_secs_f32().round();
+            format!("{full_seconds:>10} {:<4}", "s")
+        } else {
+            // less than ten seconds -> display milliseconds
+            let ms = self.as_millis();
+            format!("{ms:>10} {:<4}", "ms")
         }
-        let time = self.as_millis();
-
-        format!("{:>10} {:<4}", time, "ms")
     }
 }
 
@@ -88,10 +98,15 @@ macro_rules! shout {
     };
 }
 
-pub fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
+pub fn write_once(buffer: &[u8], directory: &Option<PathBuf>) -> std::io::Result<Duration> {
     let mut write_time = Duration::new(0, 0);
+    let test_file_with_uniq_name = format!(".benchmark.{}", fastrand::u32(99999..u32::MAX));
+    let path = match directory {
+        Some(dir) => dir.join(&test_file_with_uniq_name),
+        None => PathBuf::from_str(&test_file_with_uniq_name).unwrap(),
+    };
     {
-        let mut file = File::create("test").expect("Can't open test file");
+        let mut file = File::create(&path).expect("Can't open test file");
 
         for i in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
             // make sure the data is synced with the disk as the kernel performs
@@ -108,7 +123,7 @@ pub fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
             stdout().flush()?;
         }
     } // to enforce Drop on file
-    remove_file("test")?;
+    remove_file(path)?;
 
     Ok(write_time)
 }
@@ -120,23 +135,42 @@ mod tests {
     #[test]
     fn should_format_time() {
         assert_eq!(Duration::from_secs(100).as_human_readable(), "1 m 40 s  ");
+        assert_eq!(Duration::from_secs(200).as_human_readable(), "3 m 20 s  ");
         assert_eq!(
-            Duration::from_millis(1200).as_human_readable(),
-            "         1 s   "
+            Duration::from_millis(60001).as_human_readable(),
+            "1 m  ",
+            "should display minutes"
         );
         assert_eq!(
-            Duration::from_millis(1800).as_human_readable(),
-            "         2 s   "
+            Duration::from_millis(59999).as_human_readable(),
+            "        60 s   ",
+            "should display seconds"
+        );
+        assert_eq!(
+            Duration::from_millis(58999).as_human_readable(),
+            "        59 s   ",
+            "should display seconds"
+        );
+        assert_eq!(
+            Duration::from_secs(10).as_human_readable(),
+            "        10 s   ",
+            "should display seconds"
+        );
+        assert_eq!(
+            Duration::from_millis(9999).as_human_readable(),
+            "      9999 ms  ",
+            "should keep the ms"
         );
         assert_eq!(
             Duration::from_millis(100).as_human_readable(),
-            "       100 ms  "
+            "       100 ms  ",
+            "should keep the ms"
         );
     }
 
     #[test]
     fn test_duration_collecting() {
-        let d = write_once(&[0xff, 0xff, 0xff]).unwrap();
+        let d = write_once(&[0xff, 0xff, 0xff], &None).unwrap();
         assert!(d.as_millis() > 0);
     }
 
