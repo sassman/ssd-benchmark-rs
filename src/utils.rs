@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use std::fs::{remove_file, File};
 use std::io::{stdout, Write};
 use std::path::PathBuf;
@@ -32,12 +33,70 @@ impl HumanReadable for Duration {
             // more than ten seconds -> display seconds
             let full_seconds = self.as_secs_f32().round();
             format!("{full_seconds:>10} {:<4}", "s")
-        } else {
+        } else if self >= &Duration::from_millis(1) {
             // less than ten seconds -> display milliseconds
             let ms = self.as_millis();
             format!("{ms:>10} {:<4}", "ms")
+        } else {
+            let micros = self.as_micros();
+            format!("{micros:>10} {:<4}", "µs")
         }
     }
+}
+
+pub struct Bytes(pub u64);
+
+impl Bytes {
+    pub fn from_mb(mb: u64) -> Self {
+        Bytes(mb * 1024 * 1024)
+    }
+
+    pub fn from_kb(kb: u64) -> Self {
+        Bytes(kb * 1024)
+    }
+
+    pub fn from_b(b: u64) -> Self {
+        Bytes(b)
+    }
+}
+
+impl HumanReadable for Bytes {
+    fn as_human_readable(&self) -> String {
+        let bytes = self.0;
+        if bytes >= 1024 * 1024 {
+            format!("{:.0} MB", bytes as f64 / 1024.0 / 1024.0)
+        } else if bytes >= 1024 {
+            format!("{:.0} KB", bytes as f64 / 1024.0)
+        } else {
+            format!("{:.0} B", bytes as f64)
+        }
+    }
+}
+
+impl Display for Bytes {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_human_readable())
+    }
+}
+
+/// Calculate the throughput in IOPS.
+/// With the formula:
+/// IOPS = MB/s * 10^6 ÷ block_size
+/// ```rust
+/// use std::time::Duration;
+/// use ssd_benchmark_rs::utils::iops;
+/// use ssd_benchmark_rs::utils::Bytes;
+///
+/// let bytes = Bytes::from_mb(1024);
+/// let duration = Duration::from_secs(60);
+/// let block_size = Bytes::from_kb(4);
+///
+/// let iops = iops(bytes, duration, block_size);
+/// assert_eq!(iops, 256000);
+/// ```
+pub fn iops(bytes: Bytes, duration: Duration, block_size: Bytes) -> u64 {
+    let throughput = bytes.0.throughput(duration.as_secs() as usize);
+    (throughput as u64 * 1_000_000) / block_size.0
 }
 
 // convenience functions
@@ -76,6 +135,13 @@ macro_rules! println_time_ms {
 }
 
 #[macro_export]
+macro_rules! println_duration {
+    ($label:expr, $value:expr) => {
+        println!("{:<36} {}", $label, $value.as_human_readable());
+    };
+}
+
+#[macro_export]
 macro_rules! prof {
     ($($something:expr;)+) => {
         {
@@ -105,10 +171,11 @@ pub fn write_once(buffer: &[u8], directory: &Option<PathBuf>) -> std::io::Result
         Some(dir) => dir.join(&test_file_with_uniq_name),
         None => PathBuf::from_str(&test_file_with_uniq_name).unwrap(),
     };
+    let n = TOTAL_SIZE_MB * 1024 * 1024 / buffer.len();
     {
         let mut file = File::create(&path).expect("Can't open test file");
 
-        for i in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
+        for i in 0..n {
             // make sure the data is synced with the disk as the kernel performs
             // write buffering
             //
@@ -117,10 +184,11 @@ pub fn write_once(buffer: &[u8], directory: &Option<PathBuf>) -> std::io::Result
                 file.write_all(buffer)?;
                 file.sync_data()?;
             };
-            if i % 2 == 0 {
+            // every 1% print a dot
+            if i % (n / 50) == 0 {
                 print!(".");
+                stdout().flush()?;
             }
-            stdout().flush()?;
         }
     } // to enforce Drop on file
     remove_file(path)?;
