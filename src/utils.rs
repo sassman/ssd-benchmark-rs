@@ -3,7 +3,7 @@ use std::io::{stdout, Write};
 use std::time::{Duration, Instant};
 
 const ONE_MIN: Duration = Duration::from_secs(60);
-const ONE_SEC: Duration = Duration::from_secs(1);
+const TEN_SEC: Duration = Duration::from_secs(10);
 
 // 8 MB
 pub const BUF_SIZE_MB: usize = 8;
@@ -18,15 +18,23 @@ pub trait HumanReadable {
 impl HumanReadable for Duration {
     fn as_human_readable(&self) -> String {
         if self >= &ONE_MIN {
-            let time = (self.as_secs() / 60) as u128;
-            let seconds = self.as_secs() - (time * 60) as u64;
-            return format!("{} m {} {:<3}", time, seconds, "s");
-        } else if self >= &ONE_SEC {
-            return format!("{:>10} {:<4}", self.as_secs_f32().round(), "s");
+            // more than one minute -> display minutes and seconds
+            let full_minutes = self.as_secs() / 60;
+            let full_seconds = self.as_secs() - (full_minutes * 60);
+            if full_seconds == 0 {
+                format!("{full_minutes} m  ",)
+            } else {
+                format!("{full_minutes} m {full_seconds} {:<3}", "s")
+            }
+        } else if self >= &TEN_SEC {
+            // more than ten seconds -> display seconds
+            let full_seconds = self.as_secs_f32().round();
+            format!("{full_seconds:>10} {:<4}", "s")
+        } else {
+            // less than ten seconds -> display milliseconds
+            let ms = self.as_millis();
+            format!("{ms:>10} {:<4}", "ms")
         }
-        let time = self.as_millis();
-
-        format!("{:>10} {:<4}", time, "ms")
     }
 }
 
@@ -120,17 +128,36 @@ mod tests {
     #[test]
     fn should_format_time() {
         assert_eq!(Duration::from_secs(100).as_human_readable(), "1 m 40 s  ");
+        assert_eq!(Duration::from_secs(200).as_human_readable(), "3 m 20 s  ");
         assert_eq!(
-            Duration::from_millis(1200).as_human_readable(),
-            "         1 s   "
+            Duration::from_millis(60001).as_human_readable(),
+            "1 m  ",
+            "should display minutes"
         );
         assert_eq!(
-            Duration::from_millis(1800).as_human_readable(),
-            "         2 s   "
+            Duration::from_millis(59999).as_human_readable(),
+            "        60 s   ",
+            "should display seconds"
+        );
+        assert_eq!(
+            Duration::from_millis(58999).as_human_readable(),
+            "        59 s   ",
+            "should display seconds"
+        );
+        assert_eq!(
+            Duration::from_secs(10).as_human_readable(),
+            "        10 s   ",
+            "should display seconds"
+        );
+        assert_eq!(
+            Duration::from_millis(9999).as_human_readable(),
+            "      9999 ms  ",
+            "should keep the ms"
         );
         assert_eq!(
             Duration::from_millis(100).as_human_readable(),
-            "       100 ms  "
+            "       100 ms  ",
+            "should keep the ms"
         );
     }
 
