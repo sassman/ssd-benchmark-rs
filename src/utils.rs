@@ -44,19 +44,46 @@ impl HumanReadable for Duration {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Bytes(pub u64);
 
 impl Bytes {
-    pub fn from_mb(mb: u64) -> Self {
+    pub const fn from_mb(mb: u64) -> Self {
         Bytes(mb * 1024 * 1024)
     }
 
-    pub fn from_kb(kb: u64) -> Self {
+    pub const fn from_kb(kb: u64) -> Self {
         Bytes(kb * 1024)
     }
 
-    pub fn from_b(b: u64) -> Self {
+    pub const fn from_b(b: u64) -> Self {
         Bytes(b)
+    }
+
+    pub const fn as_mb(&self) -> u64 {
+        self.0 / 1024 / 1024
+    }
+
+    pub fn create_random_buffer(&self) -> Vec<u8> {
+        let mut buffer = vec![0; self.0 as usize];
+        fastrand::fill(&mut buffer);
+        buffer
+    }
+
+    pub const fn sequentials(&self) -> u64 {
+        128
+    }
+
+    pub const fn total_bytes(&self) -> Self {
+        Bytes(self.0 * self.sequentials())
+    }
+
+    pub fn write_and_measure(&self, directory: &Option<PathBuf>) -> std::io::Result<Duration> {
+        let buffer = self.create_random_buffer();
+        let n = self.sequentials();
+        let write_time = write_once(buffer.as_ref(), n, directory)?;
+
+        Ok(write_time)
     }
 }
 
@@ -80,39 +107,27 @@ impl Display for Bytes {
 }
 
 /// Calculate the throughput in IOPS.
-/// With the formula:
-/// IOPS = MB/s * 10^6 ÷ block_size
-/// ```rust
-/// use std::time::Duration;
-/// use ssd_benchmark_rs::utils::iops;
-/// use ssd_benchmark_rs::utils::Bytes;
-///
-/// let bytes = Bytes::from_mb(1024);
-/// let duration = Duration::from_secs(60);
-/// let block_size = Bytes::from_kb(4);
-///
-/// let iops = iops(bytes, duration, block_size);
-/// assert_eq!(iops, 256000);
-/// ```
 pub fn iops(bytes: Bytes, duration: Duration, block_size: Bytes) -> u64 {
-    let throughput = bytes.0.throughput(duration.as_secs() as usize);
-    (throughput as u64 * 1_000_000) / block_size.0
+    let throughput_bps = bytes.0 as f64 / duration.as_secs_f64();
+    let iops = throughput_bps / block_size.0 as f64;
+
+    iops as u64
 }
 
 // convenience functions
 pub trait Throughput {
-    fn throughput(&self, size_in_mb: usize) -> f32;
+    fn throughput(&self, size_in_mb: &Bytes) -> f32;
 }
 
 impl Throughput for Duration {
-    fn throughput(&self, size_in_mb: usize) -> f32 {
-        (size_in_mb as f32 / self.as_millis() as f32) * 1000_f32
+    fn throughput(&self, bytes: &Bytes) -> f32 {
+        (bytes.as_mb() as f32 / self.as_micros() as f32) * 1000_000_f32
     }
 }
 
 impl Throughput for u64 {
-    fn throughput(&self, size_in_mb: usize) -> f32 {
-        (size_in_mb as f32 / *self as f32) * 1000_f32
+    fn throughput(&self, bytes: &Bytes) -> f32 {
+        (bytes.as_mb() as f32 / *self as f32) * 1000_f32
     }
 }
 
@@ -164,14 +179,15 @@ macro_rules! shout {
     };
 }
 
-pub fn write_once(buffer: &[u8], directory: &Option<PathBuf>) -> std::io::Result<Duration> {
+pub fn write_once(buffer: &[u8], n: u64, directory: &Option<PathBuf>) -> std::io::Result<Duration> {
     let mut write_time = Duration::new(0, 0);
     let test_file_with_uniq_name = format!(".benchmark.{}", fastrand::u32(99999..u32::MAX));
     let path = match directory {
         Some(dir) => dir.join(&test_file_with_uniq_name),
         None => PathBuf::from_str(&test_file_with_uniq_name).unwrap(),
     };
-    let n = TOTAL_SIZE_MB * 1024 * 1024 / buffer.len();
+
+    let one_percent = n / 50;
     {
         let mut file = File::create(&path).expect("Can't open test file");
 
@@ -185,7 +201,7 @@ pub fn write_once(buffer: &[u8], directory: &Option<PathBuf>) -> std::io::Result
                 file.sync_data()?;
             };
             // every 1% print a dot
-            if i % (n / 50) == 0 {
+            if i % one_percent == 0 {
                 print!(".");
                 stdout().flush()?;
             }
@@ -238,7 +254,7 @@ mod tests {
 
     #[test]
     fn test_duration_collecting() {
-        let d = write_once(&[0xff, 0xff, 0xff], &None).unwrap();
+        let d = write_once(&[0xff, 0xff, 0xff], 128, &None).unwrap();
         assert!(d.as_millis() > 0);
     }
 
@@ -247,5 +263,15 @@ mod tests {
         let d = Duration::new(1000, 0);
         let t = d.throughput(100);
         assert!((t - 0.1).abs() <= f32::EPSILON);
+    }
+
+    #[test]
+    fn test_iops() {
+        let bytes = Bytes::from_mb(500);
+        let duration = Duration::from_secs(1);
+        let block_size = Bytes::from_kb(4);
+
+        let iops = iops(bytes, duration, block_size);
+        assert_eq!(iops, 128000);
     }
 }
