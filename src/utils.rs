@@ -98,8 +98,9 @@ macro_rules! shout {
 
 pub fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
     let mut write_time = Duration::new(0, 0);
+    let test_file_with_uniq_name = format!(".benchmark.{}", fastrand::u32(99999..u32::MAX));
     {
-        let mut file = File::create("test").expect("Can't open test file");
+        let mut file = File::create(&test_file_with_uniq_name).expect("Can't open test file");
 
         for i in 0..TOTAL_SIZE_MB / BUF_SIZE_MB {
             // make sure the data is synced with the disk as the kernel performs
@@ -116,7 +117,7 @@ pub fn write_once(buffer: &[u8]) -> std::io::Result<Duration> {
             stdout().flush()?;
         }
     } // to enforce Drop on file
-    remove_file("test")?;
+    remove_file(test_file_with_uniq_name)?;
 
     Ok(write_time)
 }
