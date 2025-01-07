@@ -170,7 +170,7 @@ mod tests {
 
     #[test]
     fn test_duration_collecting() {
-        let d = write_once(&[0xff, 0xff, 0xff]).unwrap();
+        let d = write_once(&[0xff, 0xff, 0xff], &None).unwrap();
         assert!(d.as_millis() > 0);
     }
 
