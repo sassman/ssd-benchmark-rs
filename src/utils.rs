@@ -5,17 +5,20 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::{Duration, Instant};
 
+use crate::throughput::{self, Throughput};
+
 const ONE_MIN: Duration = Duration::from_secs(60);
 const TEN_SEC: Duration = Duration::from_secs(10);
 
-// 8 MB
-pub const BUF_SIZE_MB: usize = 8;
-// 1 GB
-pub const TOTAL_SIZE_MB: usize = 1024;
 pub const MAX_CYCLES: usize = 8;
 
 pub trait HumanReadable {
     fn as_human_readable(&self) -> String;
+}
+
+pub trait MetricWithUnit<T> {
+    fn as_unit(&self) -> &'static str;
+    fn as_value(&self) -> T;
 }
 
 impl HumanReadable for Duration {
@@ -64,6 +67,14 @@ impl Bytes {
         self.0 / 1024 / 1024
     }
 
+    pub const fn as_kb(&self) -> u64 {
+        self.0 / 1024
+    }
+
+    pub const fn as_byte(&self) -> u64 {
+        self.0
+    }
+
     pub fn create_random_buffer(&self) -> Vec<u8> {
         let mut buffer = vec![0; self.0 as usize];
         fastrand::fill(&mut buffer);
@@ -71,14 +82,21 @@ impl Bytes {
     }
 
     pub const fn sequentials(&self) -> u64 {
+        // if self.as_mb() < 1 {
+        // 1024
+        // } else {
         128
+        // }
     }
 
     pub const fn total_bytes(&self) -> Self {
         Bytes(self.0 * self.sequentials())
     }
 
-    pub fn write_and_measure(&self, directory: &Option<PathBuf>) -> std::io::Result<Duration> {
+    pub fn meassure_sequenqually_writes(
+        &self,
+        directory: &Option<PathBuf>,
+    ) -> std::io::Result<Duration> {
         let buffer = self.create_random_buffer();
         let n = self.sequentials();
         let write_time = write_once(buffer.as_ref(), n, directory)?;
@@ -108,52 +126,10 @@ impl Display for Bytes {
 
 /// Calculate the throughput in IOPS.
 pub fn iops(bytes: Bytes, duration: Duration, block_size: Bytes) -> u64 {
-    let throughput_bps = bytes.0 as f64 / duration.as_secs_f64();
-    let iops = throughput_bps / block_size.0 as f64;
+    let throughput = Throughput::new(bytes, duration);
+    let iops = throughput.as_mbps() * 1024.0 * 1024.0 / block_size.as_kb() as f64;
 
     iops as u64
-}
-
-// convenience functions
-pub trait Throughput {
-    fn throughput(&self, size_in_mb: &Bytes) -> f32;
-}
-
-impl Throughput for Duration {
-    fn throughput(&self, bytes: &Bytes) -> f32 {
-        (bytes.as_mb() as f32 / self.as_micros() as f32) * 1000_000_f32
-    }
-}
-
-impl Throughput for u64 {
-    fn throughput(&self, bytes: &Bytes) -> f32 {
-        (bytes.as_mb() as f32 / *self as f32) * 1000_f32
-    }
-}
-
-#[macro_export]
-macro_rules! println_stats {
-    ($label:expr, $value:expr, $unit:expr) => {
-        println!("{:<36} {:>10.2} {}", $label, $value, $unit);
-    };
-}
-
-#[macro_export]
-macro_rules! println_time_ms {
-    ($label:expr, $value:expr) => {
-        println!(
-            "{:<36} {}",
-            $label,
-            Duration::from_millis($value as u64).as_human_readable()
-        );
-    };
-}
-
-#[macro_export]
-macro_rules! println_duration {
-    ($label:expr, $value:expr) => {
-        println!("{:<36} {}", $label, $value.as_human_readable());
-    };
 }
 
 #[macro_export]
@@ -169,19 +145,9 @@ macro_rules! prof {
     };
 }
 
-#[macro_export]
-macro_rules! shout {
-    ($label:expr) => {
-        let standard_font = FIGfont::standard().unwrap();
-        let figure = standard_font.convert($label);
-        assert!(figure.is_some());
-        println!("{}", figure.unwrap());
-    };
-}
-
 pub fn write_once(buffer: &[u8], n: u64, directory: &Option<PathBuf>) -> std::io::Result<Duration> {
-    let mut write_time = Duration::new(0, 0);
-    let test_file_with_uniq_name = format!(".benchmark.{}", fastrand::u32(99999..u32::MAX));
+    let mut write_time = Duration::default();
+    let test_file_with_uniq_name = format!(".benchmark.{}", fastrand::u32(99999..));
     let path = match directory {
         Some(dir) => dir.join(&test_file_with_uniq_name),
         None => PathBuf::from_str(&test_file_with_uniq_name).unwrap(),
@@ -256,13 +222,6 @@ mod tests {
     fn test_duration_collecting() {
         let d = write_once(&[0xff, 0xff, 0xff], 128, &None).unwrap();
         assert!(d.as_millis() > 0);
-    }
-
-    #[test]
-    fn test_throughput_trait() {
-        let d = Duration::new(1000, 0);
-        let t = d.throughput(100);
-        assert!((t - 0.1).abs() <= f32::EPSILON);
     }
 
     #[test]

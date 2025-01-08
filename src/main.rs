@@ -3,12 +3,15 @@ use std::time::{Duration, Instant};
 
 use clap::Parser;
 use figlet_rs::FIGfont;
+use throughput::Throughput;
 use utils::{iops, Bytes};
 
 use crate::statistics::{mean, std_deviation};
-use crate::utils::{HumanReadable, Throughput, MAX_CYCLES};
+use crate::utils::{HumanReadable, MetricWithUnit, MAX_CYCLES};
 
+mod fmt;
 mod statistics;
+mod throughput;
 mod utils;
 
 const MAX_BLOCK_SIZE: Bytes = Bytes::from_mb(256);
@@ -75,11 +78,11 @@ fn main() -> std::io::Result<()> {
     }
 
     let buf_size = parse_block_size(&args);
+    dbg!(buf_size);
 
     println!("## Preparation");
     println!();
     println!("Filling buffer with {buf_size} random data... ");
-    let buffer = buf_size.create_random_buffer();
     let n = buf_size.sequentials();
 
     println!();
@@ -87,15 +90,15 @@ fn main() -> std::io::Result<()> {
     println!();
     println!("Performing {n} sequential writes of {buf_size} blocks",);
 
-    let write_time = buf_size.write_and_measure(&args.directory)?;
-    let total_bytes = buf_size.total_bytes();
+    let write_time = buf_size.meassure_sequenqually_writes(&args.directory)?;
+    let total_bytes = Bytes::from_b(buf_size.as_byte() * n);
 
     if !verbose {
         println!();
     }
     println!();
     println_duration!("Total time", write_time);
-    println_stats!("Throughput", write_time.throughput(&total_bytes), "MB/s");
+    println_metric!("Throughput", Throughput::new(total_bytes, write_time));
     println_stats!(
         "Performance",
         iops(total_bytes, write_time, buf_size),
@@ -109,11 +112,11 @@ fn main() -> std::io::Result<()> {
     let mut write_time = Duration::default();
     let mut min_w_time = Duration::MAX;
     let mut max_w_time = Duration::default();
-    let mut write_timings: Vec<f64> = Vec::with_capacity(MAX_CYCLES);
+    let mut write_timings: Vec<Duration> = Vec::with_capacity(MAX_CYCLES);
     for i in 1..=MAX_CYCLES {
         print!("[{i}/{MAX_CYCLES}] ");
-        let duration = buf_size.write_and_measure(&args.directory)?;
-        write_timings.push(duration.as_millis() as f64);
+        let duration = buf_size.meassure_sequenqually_writes(&args.directory)?;
+        write_timings.push(duration);
         if duration > max_w_time {
             max_w_time = duration;
         }
@@ -123,43 +126,48 @@ fn main() -> std::io::Result<()> {
         write_time += duration;
         println!();
         if verbose {
-            println_duration!(format!("Time"), duration);
-            println_stats!("Throughput", duration.throughput(&total_bytes), "MB/s");
+            println_duration!("Time", duration);
+            println_metric!("Throughput", Throughput::new(total_bytes, duration));
         }
     }
-    let deviation_time = std_deviation(write_timings.as_slice()).unwrap_or(0 as f64) as u64;
-    let mean_time_ms = mean(write_timings.as_slice()).unwrap_or(0 as f64) as u64;
-    let write_values: Vec<f32> = write_timings
-        .as_slice()
+    let write_micros = write_timings
         .iter()
-        .map(|t| (*t as u64).throughput(&total_bytes))
-        .collect();
-    let mean_throughput = std_deviation(write_values.as_slice());
+        .map(|d| d.as_micros() as f64)
+        .collect::<Vec<_>>();
+    let deviation_time =
+        Duration::from_micros(std_deviation(write_micros.as_slice()).unwrap_or(0 as f64) as u64);
+    let mean_time = Duration::from_micros(mean(write_micros.as_slice()).unwrap_or(0.0) as u64);
+    // let write_values: Vec<_> = write_timings
+    // .iter()
+    // .map(|d| Throughput::new(total_bytes, *d))
+    // .collect();
+    // let mean_throughput = std_deviation(write_values.as_slice());
 
     println!();
     println_duration!("Total time", write_time);
     println_duration!("Min write time", min_w_time);
     println_duration!("Max write time", max_w_time);
     println_duration!("Range write time", max_w_time - min_w_time);
-    println_time_ms!("Average write time Ø", mean_time_ms);
-    println_time_ms!("Standard deviation σ", deviation_time);
+    println_duration!("Average write time Ø", mean_time);
+    println_duration!("Standard deviation σ", deviation_time);
     println!();
+    println_metric!("Min throughput", Throughput::new(total_bytes, max_w_time));
+    println_metric!("Max throughput", Throughput::new(total_bytes, min_w_time));
     println_stats!(
-        "Min throughput",
-        max_w_time.throughput(&total_bytes),
-        "MB/s"
+        "Max performance",
+        iops(total_bytes, min_w_time, buf_size),
+        "IOPS"
     );
     println_stats!(
-        "Max throughput",
-        min_w_time.throughput(&total_bytes),
-        "MB/s"
+        "Min performance",
+        iops(total_bytes, max_w_time, buf_size),
+        "IOPS"
     );
-    println_stats!(
-        "Average throughput Ø",
-        mean_time_ms.throughput(&total_bytes),
-        "MB/s"
-    );
-    println_stats!("Standard deviation σ", mean_throughput.unwrap(), "MB/s");
+
+    println!();
+    println!("## Notes");
+    println!();
+    println!("1 MB = 1024 KB and 1 KB = 1024 B");
 
     Ok(())
 }
