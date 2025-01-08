@@ -3,9 +3,9 @@ use std::fs::{remove_file, File};
 use std::io::{stdout, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
-use crate::throughput::{self, Throughput};
+use crate::timer::Timer;
 
 const ONE_MIN: Duration = Duration::from_secs(60);
 const TEN_SEC: Duration = Duration::from_secs(10);
@@ -78,15 +78,14 @@ impl Bytes {
     pub fn create_random_buffer(&self) -> Vec<u8> {
         let mut buffer = vec![0; self.0 as usize];
         fastrand::fill(&mut buffer);
+
         buffer
     }
 
     pub const fn sequentials(&self) -> u64 {
-        // if self.as_mb() < 1 {
-        // 1024
-        // } else {
-        128
-        // }
+        let total = Bytes::from_mb(8 * 128).as_byte();
+        // 128 / 8 = x / self.as_mb()
+        total / self.as_byte()
     }
 
     pub const fn total_bytes(&self) -> Self {
@@ -124,14 +123,6 @@ impl Display for Bytes {
     }
 }
 
-/// Calculate the throughput in IOPS.
-pub fn iops(bytes: Bytes, duration: Duration, block_size: Bytes) -> u64 {
-    let throughput = Throughput::new(bytes, duration);
-    let iops = throughput.as_mbps() * 1024.0 * 1024.0 / block_size.as_kb() as f64;
-
-    iops as u64
-}
-
 #[macro_export]
 macro_rules! prof {
     ($($something:expr;)+) => {
@@ -162,16 +153,20 @@ pub fn write_once(buffer: &[u8], n: u64, directory: &Option<PathBuf>) -> std::io
             // write buffering
             //
             // TODO Open the file in O_DSYNC instead to avoid the additional syscall
-            write_time += prof! {
-                file.write_all(buffer)?;
-                file.sync_data()?;
-            };
+            let timer = Timer::start();
+            file.write_all(buffer)?;
+            write_time += timer.stop();
+
             // every 1% print a dot
             if i % one_percent == 0 {
                 print!(".");
                 stdout().flush()?;
             }
         }
+
+        let timer = Timer::start();
+        file.sync_all()?;
+        write_time += timer.stop();
     } // to enforce Drop on file
     remove_file(path)?;
 
@@ -222,15 +217,5 @@ mod tests {
     fn test_duration_collecting() {
         let d = write_once(&[0xff, 0xff, 0xff], 128, &None).unwrap();
         assert!(d.as_millis() > 0);
-    }
-
-    #[test]
-    fn test_iops() {
-        let bytes = Bytes::from_mb(500);
-        let duration = Duration::from_secs(1);
-        let block_size = Bytes::from_kb(4);
-
-        let iops = iops(bytes, duration, block_size);
-        assert_eq!(iops, 128000);
     }
 }

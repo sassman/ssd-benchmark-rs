@@ -1,10 +1,10 @@
 use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use clap::Parser;
 use figlet_rs::FIGfont;
 use throughput::Throughput;
-use utils::{iops, Bytes};
+use utils::Bytes;
 
 use crate::statistics::{mean, std_deviation};
 use crate::utils::{HumanReadable, MetricWithUnit, MAX_CYCLES};
@@ -12,6 +12,7 @@ use crate::utils::{HumanReadable, MetricWithUnit, MAX_CYCLES};
 mod fmt;
 mod statistics;
 mod throughput;
+mod timer;
 mod utils;
 
 const MAX_BLOCK_SIZE: Bytes = Bytes::from_mb(256);
@@ -78,11 +79,6 @@ fn main() -> std::io::Result<()> {
     }
 
     let buf_size = parse_block_size(&args);
-    dbg!(buf_size);
-
-    println!("## Preparation");
-    println!();
-    println!("Filling buffer with {buf_size} random data... ");
     let n = buf_size.sequentials();
 
     println!();
@@ -98,12 +94,9 @@ fn main() -> std::io::Result<()> {
     }
     println!();
     println_duration!("Total time", write_time);
-    println_metric!("Throughput", Throughput::new(total_bytes, write_time));
-    println_stats!(
-        "Performance",
-        iops(total_bytes, write_time, buf_size),
-        "IOPS"
-    );
+    let tp = Throughput::new(total_bytes, write_time);
+    println_metric!("Throughput", tp);
+    println_stats!("Performance", tp.as_iops(buf_size), "IOPS");
     println!();
     println!("## Cycled Sequential Writes");
     println!();
@@ -151,23 +144,19 @@ fn main() -> std::io::Result<()> {
     println_duration!("Average write time Ø", mean_time);
     println_duration!("Standard deviation σ", deviation_time);
     println!();
-    println_metric!("Min throughput", Throughput::new(total_bytes, max_w_time));
-    println_metric!("Max throughput", Throughput::new(total_bytes, min_w_time));
-    println_stats!(
-        "Max performance",
-        iops(total_bytes, min_w_time, buf_size),
-        "IOPS"
-    );
-    println_stats!(
-        "Min performance",
-        iops(total_bytes, max_w_time, buf_size),
-        "IOPS"
-    );
+
+    let max_tp = Throughput::new(total_bytes, min_w_time);
+    let min_tp = Throughput::new(total_bytes, max_w_time);
+    println_metric!("Min throughput", min_tp);
+    println_metric!("Max throughput", max_tp);
+    println_stats!("Max performance", max_tp.as_iops(buf_size), "IOPS");
+    println_stats!("Min performance", min_tp.as_iops(buf_size), "IOPS");
 
     println!();
     println!("## Notes");
     println!();
     println!("1 MB = 1024 KB and 1 KB = 1024 B");
+    println!("IOPS = Throughput [B/s] / Block Size [B]");
 
     Ok(())
 }

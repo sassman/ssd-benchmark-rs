@@ -13,24 +13,32 @@ impl Throughput {
     }
 
     pub fn as_mbps(&self) -> f64 {
-        self.write.as_mb() as f64 / self.duration.as_secs_f64()
+        self.write.as_byte() as f64 / self.duration.as_secs_f64() / 1024.0 / 1024.0
+    }
+
+    pub fn as_bps(&self) -> f64 {
+        self.write.as_byte() as f64 / self.duration.as_secs_f64()
     }
 
     fn display(&self) -> (f64, &'static str) {
-        if self.write.as_kb() < 1 {
-            (
-                self.write.as_byte() as f64 / self.duration.as_secs_f64(),
-                "B/s",
-            )
-        } else if self.write.as_mb() < 1 {
-            dbg!(self.write.as_kb(), self.duration.as_secs_f64());
-            (
-                self.write.as_kb() as f64 / self.duration.as_secs_f64(),
-                "KB/s",
-            )
+        let bps = self.as_bps();
+        let kbps = bps / 1024.0;
+        let mbps = kbps / 1024.0;
+        let gbps = mbps / 1024.0;
+
+        if gbps >= 1.0 {
+            (gbps, "GB/s")
+        } else if mbps >= 1.0 {
+            (mbps, "MB/s")
+        } else if kbps >= 1.0 {
+            (kbps, "KB/s")
         } else {
-            (self.as_mbps(), "MB/s")
+            (bps, "B/s")
         }
+    }
+
+    pub fn as_iops(&self, block_size: Bytes) -> u64 {
+        (self.as_bps() / block_size.as_byte() as f64) as u64
     }
 }
 
@@ -47,8 +55,9 @@ impl MetricWithUnit<f64> for Throughput {
 impl Display for Throughput {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let (value, unit) = self.display();
-        if self.write.as_kb() < 1 {
-            write!(f, "{value:.0} {unit}")
+        if unit == "B/s" {
+            // there is no smaller than bytes, hence no need for decimal places
+            write!(f, "{value:.0} {unit}", value = value, unit = unit)
         } else {
             write!(f, "{value:.2} {unit}")
         }
@@ -58,6 +67,8 @@ impl Display for Throughput {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const TP_50MBPS: Throughput = Throughput::new(Bytes::from_mb(100), Duration::from_secs(2));
 
     #[test]
     fn test_display() {
@@ -75,8 +86,15 @@ mod tests {
 
     #[test]
     fn test_unit_value() {
-        let throughput = Throughput::new(Bytes::from_mb(100), Duration::from_secs(2));
-        assert_eq!(throughput.as_unit(), "MB/s");
-        assert_eq!(throughput.as_value(), 50.0);
+        assert_eq!(TP_50MBPS.as_unit(), "MB/s");
+        assert_eq!(TP_50MBPS.as_value(), 50.0);
+    }
+
+    #[test]
+    fn test_iops() {
+        let block_size = Bytes::from_kb(4);
+
+        let iops = TP_50MBPS.as_iops(block_size);
+        assert_eq!(iops, 12_800);
     }
 }
