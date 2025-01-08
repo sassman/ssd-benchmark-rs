@@ -87,7 +87,7 @@ fn main() -> std::io::Result<()> {
     println!("Performing {n} sequential writes of {buf_size} blocks",);
 
     let write_time = buf_size.meassure_sequenqually_writes(&args.directory)?;
-    let total_bytes = Bytes::from_b(buf_size.as_byte() * n);
+    let total_bytes = buf_size.total_bytes();
 
     if !verbose {
         println!();
@@ -98,6 +98,7 @@ fn main() -> std::io::Result<()> {
     println_metric!("Throughput", tp);
     println_stats!("Performance", tp.as_iops(buf_size), "IOPS");
     println!();
+
     println!("## Cycled Sequential Writes");
     println!();
     println!("Performing {MAX_CYCLES} cycles of {n} sequential writes of {buf_size} blocks");
@@ -130,27 +131,29 @@ fn main() -> std::io::Result<()> {
     let deviation_time =
         Duration::from_micros(std_deviation(write_micros.as_slice()).unwrap_or(0 as f64) as u64);
     let mean_time = Duration::from_micros(mean(write_micros.as_slice()).unwrap_or(0.0) as u64);
-    // let write_values: Vec<_> = write_timings
-    // .iter()
-    // .map(|d| Throughput::new(total_bytes, *d))
-    // .collect();
-    // let mean_throughput = std_deviation(write_values.as_slice());
 
     println!();
     println_duration!("Total time", write_time);
     println_duration!("Min write time", min_w_time);
     println_duration!("Max write time", max_w_time);
     println_duration!("Range write time", max_w_time - min_w_time);
-    println_duration!("Average write time Ø", mean_time);
+    println_duration!("Mean write time Ø", mean_time);
     println_duration!("Standard deviation σ", deviation_time);
     println!();
 
     let max_tp = Throughput::new(total_bytes, min_w_time);
     let min_tp = Throughput::new(total_bytes, max_w_time);
+    let mean_iops: Vec<_> = write_timings
+        .iter()
+        .map(|d| Throughput::new(total_bytes, *d).as_iops(buf_size) as f64)
+        .collect();
+    let mean_iops = mean(mean_iops.as_slice()).unwrap() as u64;
+
     println_metric!("Min throughput", min_tp);
     println_metric!("Max throughput", max_tp);
     println_stats!("Max performance", max_tp.as_iops(buf_size), "IOPS");
     println_stats!("Min performance", min_tp.as_iops(buf_size), "IOPS");
+    println_stats!("Mean performance", mean_iops, "IOPS");
 
     println!();
     println!("## Notes");

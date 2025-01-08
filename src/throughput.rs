@@ -12,10 +12,6 @@ impl Throughput {
         Self { write, duration }
     }
 
-    pub fn as_mbps(&self) -> f64 {
-        self.write.as_byte() as f64 / self.duration.as_secs_f64() / 1024.0 / 1024.0
-    }
-
     pub fn as_bps(&self) -> f64 {
         self.write.as_byte() as f64 / self.duration.as_secs_f64()
     }
@@ -48,7 +44,7 @@ impl MetricWithUnit<f64> for Throughput {
     }
 
     fn as_value(&self) -> f64 {
-        self.display().0 as f64
+        self.display().0
     }
 }
 

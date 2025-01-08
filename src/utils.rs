@@ -50,6 +50,7 @@ impl HumanReadable for Duration {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Bytes(pub u64);
 
+#[allow(dead_code)]
 impl Bytes {
     pub const fn from_mb(mb: u64) -> Self {
         Bytes(mb * 1024 * 1024)
