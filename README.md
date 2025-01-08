@@ -59,51 +59,59 @@ $HOME/.cargo/bin/ssd-benchmark
 
 ```sh
 $ ssd-benchmark
-  ____    ____    ____                ____                          _                                  _
- / ___|  / ___|  |  _ \              | __ )    ___   _ __     ___  | |__    _ __ ___     __ _   _ __  | | __
- \___ \  \___ \  | | | |    _____    |  _ \   / _ \ | '_ \   / __| | '_ \  | '_ ` _ \   / _` | | '__| | |/ /
-  ___) |  ___) | | |_| |   |_____|   | |_) | |  __/ | | | | | (__  | | | | | | | | | | | (_| | | |    |   <
- |____/  |____/  |____/              |____/   \___| |_| |_|  \___| |_| |_| |_| |_| |_|  \__,_| |_|    |_|\_\
+____    ____    ____                ____                          _                                  _
+/ ___|  / ___|  |  _ \              | __ )    ___   _ __     ___  | |__    _ __ ___     __ _   _ __  | | __
+\___ \  \___ \  | | | |    _____    |  _ \   / _ \ | '_ \   / __| | '_ \  | '_ ` _ \   / _` | | '__| | |/ /
+___) |  ___) | | |_| |   |_____|   | |_) | |  __/ | | | | | (__  | | | | | | | | | | | (_| | | |    |   <
+|____/  |____/  |____/              |____/   \___| |_| |_|  \___| |_| |_| |_| |_| |_|  \__,_| |_|    |_|\_\
 
 
-Version 1.1.3
-Star me on https://github.com/sassman/ssd-benchmark-rs
+Version 1.2.0
 
-Filling buffer with 8 MB random data...
-Buffer filled                              5426 ms
+## Sequential Writes
 
-Start benchmarking your disk writing performance...
-
-Perform sequential writing of total 1024 MB in 8 MB chunks
+Performing 128 sequential writes of 8 MB blocks
 ................................................................
 
-Total time                                 2522 ms
-Throughput                               512.00 MB/s
+Total time                                  229 ms
+Write Throughput                           4.37 GB/s
+Write Performance                           558 IOPS
 
-Perform 8 write cycles of 1024 MB
-................................................................
-................................................................
-................................................................
-................................................................
-................................................................
-................................................................
-................................................................
-................................................................
+## Cycled Sequential Writes
 
-Total time                                29598 ms
-Min write time                             2516 ms
-Max write time                             4934 ms
-Range write time                           2418 ms
-Average write time Ø                       3699 ms
-Standard deviation σ                        801 ms
+Performing 8 cycles of 128 sequential writes of 8 MB blocks
+[1/8] ................................................................
+[2/8] ................................................................
+[3/8] ................................................................
+[4/8] ................................................................
+[5/8] ................................................................
+[6/8] ................................................................
+[7/8] ................................................................
+[8/8] ................................................................
 
-Min throughput                           207.54 MB/s
-Max throughput                           407.00 MB/s
-Average throughput Ø                     276.83 MB/s
-Standard deviation σ                      64.76 MB/s
+Total time                                 1894 ms
+Min write time                              205 ms
+Max write time                              401 ms
+Range write time                            195 ms
+Mean write time Ø                           236 ms
+Standard deviation σ                         62 ms
+
+Min write throughput                       2.49 GB/s
+Max write throughput                       4.87 GB/s
+Max write performance                       623 IOPS
+Min write performance                       318 IOPS
+Mean write performance                      565 IOPS
+
+## Notes
+
+1 MB = 1024 KB and 1 KB = 1024 B
+IOPS = Throughput [B/s] / Block Size [B]
 ```
 
-The great thing is, there are no parameters or options.
+## Options
+
+- `-d` or `--directory` to specify a directory to write to and meassure the performance
+- `--block-size` to specify the block size in, like `--block-size 4k` or `--block-size 8m` (default is 8m)
 
 ## Missing something?
 
