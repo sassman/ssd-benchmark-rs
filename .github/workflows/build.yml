@@ -74,6 +74,19 @@ jobs:
         run: cargo deny check advisories bans sources
         continue-on-error: true
 
+  build-docker:
+      name: build docker image
+      needs: check
+      runs-on: ubuntu-latest
+      steps:
+      - name: Build Docker image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
   publish-dry-run:
     name: publish dry run
     needs: tests
