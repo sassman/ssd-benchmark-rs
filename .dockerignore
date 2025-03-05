@@ -1,5 +1,1 @@
-!Dockerfile
-!src
-!Cargo.toml
-!Cargo.lock
-*
+target/

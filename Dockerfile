@@ -2,7 +2,7 @@ FROM rust:alpine3.21 as builder
 
 WORKDIR /app
 
-ADD Cargo.toml Cargo.lock src /app/
+COPY . ./
 RUN apk update && \
     apk add musl-dev jq && \
     cargo build --release --message-format=json > build.json
