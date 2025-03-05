@@ -1,7 +1,13 @@
-FROM ekidd/rust-musl-builder:latest as builder
+FROM rust:alpine3.21 as builder
+
+WORKDIR /app
 
 ADD --chown=rust:rust . ./
-RUN cargo build --release
+RUN apk update && \
+    apk add musl-dev jq && \
+    cargo build --release --message-format=json > build.json
+# copy binary to a new location
+RUN jq -r '.executable | select(. != null)' build.json | xargs -I '{}' cp '{}' /app
 
 # final image
 FROM alpine:latest
@@ -10,8 +16,8 @@ LABEL name="ssd-benchmark"
 LABEL org.opencontainers.image.source="https://github.com/sassman/ssd-benchmark-rs"
 LABEL repository="https://github.com/sassman/ssd-benchmark-rs"
 LABEL homepage="https://github.com/sassman/ssd-benchmark-rs"
-LABEL maintainer="Sven Assmann"
+LABEL maintainer="Sven Kanoldt <sven@d34dl0ck.me>"
 
-COPY --from=builder /home/rust/src/target/x86_64-unknown-linux-musl/release/ssd-benchmark \
-                    /usr/local/bin/
+COPY --from=builder /app/ssd-benchmark \
+    /usr/local/bin/
 CMD /usr/local/bin/ssd-benchmark
