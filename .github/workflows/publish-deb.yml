@@ -1,0 +1,41 @@
+name: publish .deb to GitHub Release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach the .deb asset to"
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to attach the .deb asset to"
+        required: true
+        type: string
+
+env:
+  BINARY_NAME: ssd-benchmark
+  TARGET: x86_64-unknown-linux-musl
+
+jobs:
+  pkg-deb:
+    name: binary package .deb
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: build .deb file
+        uses: sassman/rust-deb-builder@v1
+      - name: Archive deb artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.BINARY_NAME }}-${{ inputs.tag }}-${{ env.TARGET }}.deb
+          path: target/${{ env.TARGET }}/debian/${{ env.BINARY_NAME }}*.deb
+      - name: upload deb file to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ inputs.tag }}" \
+            target/${{ env.TARGET }}/debian/${{ env.BINARY_NAME }}*.deb \
+            --clobber

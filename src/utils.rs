@@ -217,6 +217,9 @@ mod tests {
     #[test]
     fn test_duration_collecting() {
         let d = write_once(&[0xff, 0xff, 0xff], 128, &None).unwrap();
-        assert!(d.as_millis() > 0);
+        // Writing 384 bytes can finish in well under a millisecond on fast
+        // runners; assert the timing was accumulated at all rather than
+        // imposing an arbitrary lower bound.
+        assert!(d.as_nanos() > 0);
     }
 }
