@@ -303,6 +303,9 @@ jobs:
       - plan
       - host
     if: ${{ needs.plan.outputs.publishing == 'true' }}
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/publish-to-dockerhub.yml
     secrets: inherit
 
@@ -311,6 +314,11 @@ jobs:
       - plan
       - host
     if: ${{ needs.plan.outputs.publishing == 'true' }}
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
     uses: ./.github/workflows/publish-to-ghcr.yml
     secrets: inherit
 
@@ -319,6 +327,8 @@ jobs:
       - plan
       - host
     if: ${{ needs.plan.outputs.publishing == 'true' }}
+    permissions:
+      contents: write
     uses: ./.github/workflows/publish-deb.yml
     with:
       tag: ${{ needs.plan.outputs.tag }}
