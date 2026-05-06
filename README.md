@@ -31,6 +31,12 @@ After that, it writes these random data 8 times again on disk and measures the a
 docker run --rm ghcr.io/sassman/ssd-benchmark-rs
 ```
 
+### Install with Homebrew (macOS / Linux)
+
+```sh
+brew install sassman/tap/ssd-benchmark
+```
+
 ### Install on linux
 
 [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/ssd-benchmark)
