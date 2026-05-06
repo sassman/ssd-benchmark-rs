@@ -148,7 +148,7 @@ dependencies = [
 
 [[package]]
 name = "ssd-benchmark"
-version = "1.2.4-alpha.3"
+version = "1.2.4-alpha.4"
 dependencies = [
  "clap",
  "fastrand",
