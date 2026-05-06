@@ -27,3 +27,8 @@ buildflags = ["--release"]
 
 [package.metadata.rpm.targets]
 ssd-benchmark = { path = "/usr/bin/ssd-benchmark" }
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"

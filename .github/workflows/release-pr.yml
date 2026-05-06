@@ -10,6 +10,9 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "**/docs/**"
+      - "**.md"
   workflow_dispatch:
 
 jobs:
@@ -18,14 +21,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Run release-plz pr
-        uses: MarcoIeni/release-plz-action@v0.5
+        uses: release-plz/action@v0.5
         with:
           command: release-pr
           config: release-plz.toml
