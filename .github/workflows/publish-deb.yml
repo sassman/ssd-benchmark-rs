@@ -24,11 +24,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: build .deb file
         uses: sassman/rust-deb-builder@v1
       - name: Archive deb artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.BINARY_NAME }}-${{ inputs.tag }}-${{ env.TARGET }}.deb
           path: target/${{ env.TARGET }}/debian/${{ env.BINARY_NAME }}*.deb
